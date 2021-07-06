@@ -1,0 +1,19 @@
+version: '3'
+
+services:
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    security_opt:
+      - seccomp:unconfined
+      - apparmor:unconfined
+    container_name: dev
+    ports:
+      - "7776:22" # SSH
+      - "7777:7777" # GDB Server
+    volumes:
+      - ${HOME}/.Xauthority:/home/dev/.Xauthority:rw # X11 stuff
+      - /tmp/.X11-unix:/tmp/.X11-unix # X11 stuff
+      - /dev/dri:/dev/dri #X11 stuff
+      - /dev/snd:/dev/snd #X11 stuff
