@@ -11,6 +11,15 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
   clang \
   cmake \
   rsync \
+  git \
+  libeigen3-dev \
+  libgl1-mesa-dev \
+  libglew-dev \
+  libpython2.7-dev \
+  libegl1-mesa-dev \
+  libwayland-dev \
+  libxkbcommon-dev \
+  wayland-protocols \
   qt5-default
 
 RUN mkdir /var/run/sshd
@@ -29,6 +38,16 @@ EXPOSE 22 7777
 # Create dev user with password 'dev'
 RUN useradd -ms /bin/bash dev
 RUN echo 'dev:dev' | chpasswd
+
+# get pangolin
+WORKDIR /home/dev
+RUN git clone https://github.com/stevenlovegrove/Pangolin.git
+
+# install pangolin
+WORKDIR /home/dev/Pangolin/build
+RUN cmake ..
+RUN cmake --build .
+RUN cmake --install . 
 
 # Upon start, run ssh daemon
 CMD ["/usr/sbin/sshd", "-D"]
