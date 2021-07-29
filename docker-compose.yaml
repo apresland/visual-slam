@@ -1,10 +1,13 @@
-version: '3'
+version: '2.3'
 
 services:
   dev:
+    runtime: nvidia
     build:
       context: .
       dockerfile: Dockerfile
+    stdin_open: true
+    tty: true
     security_opt:
       - seccomp:unconfined
       - apparmor:unconfined
@@ -12,8 +15,10 @@ services:
     ports:
       - "7776:22" # SSH
       - "7777:7777" # GDB Server
+    environment:
+      - DISPLAY
     volumes:
       - ${HOME}/.Xauthority:/home/dev/.Xauthority:rw # X11 stuff
-      - /tmp/.X11-unix:/tmp/.X11-unix # X11 stuff
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw # X11 stuff
       - /dev/dri:/dev/dri #X11 stuff
       - /dev/snd:/dev/snd #X11 stuff

@@ -1,10 +1,8 @@
 cmake_minimum_required(VERSION 3.0)
+project(visual-slam)
 
-project(hello)
+set(CMAKE_CXX_FLAGS "-std=c++17")
 
-find_package(Qt5 COMPONENTS Quick Core Widgets REQUIRED)
-qt5_add_resources(RESOURCES qml.qrc)
-
-add_executable(hello Main.cpp)
-target_link_libraries(hello Qt5::Widgets)
+add_subdirectory(test_eigen)
+add_subdirectory(stereo_vision)
 
