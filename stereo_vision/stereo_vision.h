@@ -12,6 +12,9 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
+/**
+ * A stereo matcher to generate filtered disparity maps.
+ */
 class StereoMatcher {
 public:
     StereoMatcher();
@@ -29,14 +32,18 @@ private:
     cv::Ptr<cv::StereoSGBM> left_matcher;
     cv::Ptr<cv::StereoMatcher> right_matcher;
     cv::Ptr<cv::ximgproc::DisparityWLSFilter> wls_filter;
-    cv::Mat left_disparity, right_disparity, filtered_disp, disparity_map;
 };
 
+/**
+ * Generate a pointcloud from left and right images given the camera projection matrix Q.
+ * Internally generates a disparity map from the stereo image pair, reprojects it into 3D space
+ * and convert into a voxel grid
+ */
 class PointCloudGenerator {
 public:
     PointCloudGenerator(StereoMatcher &matcher, cv::Mat &Q);
     ~PointCloudGenerator();
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr get(cv::Mat& left, cv::Mat& right);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr generate(cv::Mat& left, cv::Mat& right);
 private:
     cv::Mat& Q_;
     StereoMatcher& stereoMatcher_;

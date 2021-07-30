@@ -13,7 +13,7 @@ void compute_stereo(cv::Mat& left, cv::Mat& right, cv::Mat &Q)
 {
     StereoMatcher stereoMatcher;
     PointCloudGenerator pointCloud(stereoMatcher, Q);
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_filtered = pointCloud.get(left, right);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_filtered = pointCloud.generate(left, right);
 
     pcl::visualization::CloudViewer viewer ("Simple Cloud Viewer");
     viewer.showCloud(cloud_filtered);

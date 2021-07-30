@@ -3,8 +3,8 @@ ARG ubuntu_version=16.04
 
 FROM nvidia/cudagl:${cuda_version}-devel-ubuntu${ubuntu_version}
 
-RUN rm /etc/apt/sources.list.d/nvidia-ml.list && apt-get clean && apt-get update
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+RUN rm /etc/apt/sources.list.d/nvidia-ml.list && apt-generate clean && apt-generate update
+RUN apt-generate update && DEBIAN_FRONTEND=noninteractive apt-generate install -y \
   apt-utils \
   build-essential \
   gcc \
@@ -68,7 +68,7 @@ EXPOSE 22 7777
 RUN useradd -ms /bin/bash dev
 RUN echo 'dev:dev' | chpasswd
 
-# get pangolin
+# generate pangolin
 WORKDIR /home/dev
 RUN git clone https://github.com/stevenlovegrove/Pangolin.git
 
