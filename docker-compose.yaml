@@ -22,3 +22,4 @@ services:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw # X11 stuff
       - /dev/dri:/dev/dri #X11 stuff
       - /dev/snd:/dev/snd #X11 stuff
+      - /data:/data #

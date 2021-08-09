@@ -3,6 +3,6 @@ project(visual-slam)
 
 set(CMAKE_CXX_FLAGS "-std=c++17")
 
-add_subdirectory(test_eigen)
 add_subdirectory(stereo_vision)
+add_subdirectory(visual_odometry)
 
