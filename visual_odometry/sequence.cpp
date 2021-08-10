@@ -17,16 +17,16 @@ void Sequence::LoadFrames(std::string filepath) {
     if (!file) {
         throw std::runtime_error("Could not load timestamps file: " + filepath);
     }
-    frames_.clear();
+    elements_.clear();
     int frame_index = 0;
     std::string  line;
     while (std::getline(file, line)) {
         std::istringstream timestamp_string(line);
-        std::shared_ptr<Frame> frame = std::make_shared<Frame>();
-        timestamp_string >> frame->timestamp_;
-        frame->image_left_ = loadImageLeft(frame_index, sequence_path_);
-        frame->image_right_ = loadImageRight(frame_index, sequence_path_);
-        frames_.push_back(frame);
+        std::shared_ptr<StereoPair> pair = std::make_shared<StereoPair>();
+        timestamp_string >> pair->timestamp_;
+        pair->image_left_ = loadImageLeft(frame_index, sequence_path_);
+        pair->image_right_ = loadImageRight(frame_index, sequence_path_);
+        elements_.push_back(pair);
         ++frame_index;
     }
 

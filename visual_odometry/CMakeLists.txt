@@ -13,5 +13,5 @@ include_directories(
         "/usr/include/eigen3/"
 )
 
-add_executable(stereo kittislam.cpp odometry.h odometry.cpp frame.h frame.cpp sequence.h sequence.cpp)
+add_executable(stereo kittislam.cpp odometry.h odometry.cpp frontend.h frontend.cpp frame.h sequence.h sequence.cpp viewer.h viewer.cpp)
 target_link_libraries(stereo ${OpenCV_LIBS} pthread)
