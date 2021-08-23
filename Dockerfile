@@ -3,8 +3,8 @@ ARG ubuntu_version=16.04
 
 FROM nvidia/cudagl:${cuda_version}-devel-ubuntu${ubuntu_version}
 
-RUN rm /etc/apt/sources.list.d/nvidia-ml.list && apt-generate clean && apt-generate update
-RUN apt-generate update && DEBIAN_FRONTEND=noninteractive apt-generate install -y \
+RUN rm /etc/apt/sources.list.d/nvidia-ml.list && apt-get clean && apt-get update
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
   apt-utils \
   build-essential \
   gcc \
@@ -19,7 +19,6 @@ RUN apt-generate update && DEBIAN_FRONTEND=noninteractive apt-generate install -
   pkg-config \
   mesa-utils \
   libgl1-mesa-glx \
-  libeigen3-dev \
   libgl1-mesa-dev \
   libglew-dev \
   libpython2.7-dev \
@@ -82,9 +81,36 @@ RUN make install
 WORKDIR /home/dev/
 RUN git clone https://github.com/opencv/opencv.git
 RUN git clone https://github.com/opencv/opencv_contrib.git
-
 WORKDIR /home/dev/opencv/build
 RUN cmake -DOPENCV_EXTRA_MODULES_PATH=/home/dev/opencv_contrib/modules ..
+RUN make
+RUN make install
+
+RUN apt-get install libxmu-dev libxi-dev
+
+#install eigen
+WORKDIR /home/dev/
+RUN git clone https://gitlab.com/libeigen/eigen
+WORKDIR /home/dev/eigen
+RUN git checkout 3.3.0
+WORKDIR /home/dev/eigen/build
+RUN cmake ..
+RUN make
+RUN make install
+
+# install sophos
+WORKDIR /home/dev/
+RUN git clone https://github.com/strasdat/Sophus
+WORKDIR /home/dev/Sophus/build
+RUN cmake ..
+RUN make
+RUN make install
+
+# install fmt
+WORKDIR /home/dev/
+RUN git clone https://github.com/fmtlib/fmt
+WORKDIR /home/dev/fmt/build
+RUN cmake ..
 RUN make
 RUN make install
 
