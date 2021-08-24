@@ -6,7 +6,7 @@
 #include <Eigen/Geometry>
 #include <sophus/se3.hpp>
 #include <sophus/so3.hpp>
-#include "main.h"
+#include "odometry.h"
 #include "frame.h"
 #include "viewer.h"
 #include "frontend.h"

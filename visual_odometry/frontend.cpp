@@ -1,19 +1,28 @@
 #include <algorithm>
 #include <opencv2/opencv.hpp>
+#include <sophus/se3.hpp>
+#include <sophus/so3.hpp>
+#include "feature.h"
 #include "frontend.h"
 
 Frontend::Frontend() {
-    detector_ = cv::ORB::create(1000);
-    descriptor_ = cv::ORB::create();
-    matcher_ = cv::BFMatcher::create(cv::NORM_HAMMING, true);
+    detector_ = cv::FastFeatureDetector::create(20, true);
 }
 
 void Frontend::process(std::shared_ptr<Frame> frame) {
 
     current_frame_ = frame;
-    detect_features();
-    if(previous_frame_) {
-        match_features();
+
+    switch (status_) {
+        case INITIALIZING:
+            initialize();
+            break;
+        case TRACKING:
+            track();
+            break;
+        case LOST:
+            restart();
+            break;
     }
 
     if(viewer_) {
@@ -23,40 +32,65 @@ void Frontend::process(std::shared_ptr<Frame> frame) {
     previous_frame_ = current_frame_;
 }
 
-/**
- * Feature detection in the current frame using cv::FeatureDetector.
- * Use the concrete cv::FeatureDetector supplied at construction
- * to dectect features in the left image of the stereo pair.
- * @return The number of features detected.
- */
-int Frontend::detect_features() {
-    int count_keypoints = 0;
-    std::vector<cv::KeyPoint> keypoints;
-    detector_->detect(current_frame_->image_left_, keypoints);
-    for (auto &kp : keypoints) {
-        current_frame_->keypoints_.push_back(kp);
-        ++count_keypoints;
-    }
-    descriptor_->compute(current_frame_->image_left_, keypoints, current_frame_->descriptors_);
-    return count_keypoints;
+int Frontend::initialize() {
+    detect_features(current_frame_->image_left_);
+    status_ = TRACKING;
 }
 
-int Frontend::match_features() {
-    int count_keypoints = 0;
-    std::vector<cv::DMatch> matches;
-    matcher_->match(previous_frame_->descriptors_, current_frame_->descriptors_, matches);
+int Frontend::track() {
+    detect_features(current_frame_->image_left_);
+}
 
-    auto min_max = minmax_element(matches.begin(), matches.end(), [](const cv::DMatch &lhs, const cv::DMatch &rhs) {
-        return lhs.distance < rhs.distance;
-    });
+int Frontend::restart() {
 
-    auto min_element = min_max.first;
-    auto max_element = min_max.second;
+}
 
-    for (auto &m : matches) {
-        if( m.distance <= std::max(2.0 * min_element->distance, 30.0) ) {
-            current_frame_->matches_.push_back(m);
-            ++count_keypoints;
+int Frontend::detect_features(cv::Mat &image) {
+
+    auto sort_predicate = [](cv::KeyPoint const& kp1, cv::KeyPoint const& kp2)-> bool {
+        return kp1.response > kp2.response;
+    };
+
+    std::vector<cv::KeyPoint> keypoints;
+    detector_->detect(image, keypoints);
+
+
+    for(int x =0; x < NUMBER_GRID_CELL_COLS; ++x) {
+        for(int y =0; y < NUMBER_GRID_CELL_ROWS; ++y) {
+            feature_grid_[x][y].clear();
         }
     }
+
+    for (auto &keypoint : keypoints) {
+        int x, y;
+        if(position_in_grid(keypoint, x, y))
+            feature_grid_[x][y].push_back(keypoint);
+            current_frame_->keypoints_left_.push_back(keypoint);
+    }
+
+    for(int x =0; x < NUMBER_GRID_CELL_COLS; ++x) {
+        for(int y =0; y < NUMBER_GRID_CELL_ROWS; ++y) {
+            unsigned int count = 0;
+            std::sort(feature_grid_[x][y].begin(), feature_grid_[x][y].end(), sort_predicate);
+            for (auto &keypoint : feature_grid_[x][y]) {
+                if (count >= MAX_FEATURES_PER_CELL) continue;
+                std::shared_ptr<Feature> feature = std::make_shared<Feature>(keypoint.pt);
+                current_frame_->features_left_.push_back(feature);
+                ++count;
+            }
+        }
+    }
+
 }
+
+bool Frontend::position_in_grid(cv::KeyPoint &keypoint, int &grid_pos_x, int &grid_pos_y) {
+    float grid_cell_width_inverse = static_cast<float>(NUMBER_GRID_CELL_COLS) / (current_frame_->image_left_.cols);
+    float grid_cell_height_inverse = static_cast<float>(NUMBER_GRID_CELL_ROWS) / (current_frame_->image_left_.rows);
+    grid_pos_x = round((keypoint.pt.x)*grid_cell_width_inverse);
+    grid_pos_y = round((keypoint.pt.y)*grid_cell_height_inverse);
+    if(grid_pos_x<0 || grid_pos_x >= NUMBER_GRID_CELL_COLS || grid_pos_y < 0 || grid_pos_y >= NUMBER_GRID_CELL_ROWS)
+        return false;
+
+    return true;
+}
+

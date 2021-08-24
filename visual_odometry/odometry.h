@@ -2,8 +2,8 @@
 // Created by andy on 8/9/21.
 //
 
-#ifndef VISUAL_SLAM_MAIN_H
-#define VISUAL_SLAM_MAIN_H
+#ifndef VISUAL_SLAM_ODOMETRY_H
+#define VISUAL_SLAM_ODOMETRY_H
 
 #include <memory>
 #include <Eigen/Core>
@@ -28,4 +28,4 @@ private:
     double prev_timestamp_ = 0;
 };
 
-#endif //VISUAL_SLAM_MAIN_H
+#endif //VISUAL_SLAM_ODOMETRY_H

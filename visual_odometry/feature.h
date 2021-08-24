@@ -1,22 +1,18 @@
-//
-// Created by andy on 8/9/21.
-//
-
 #ifndef VISUAL_SLAM_FEATURE_H
 #define VISUAL_SLAM_FEATURE_H
 
 #include <memory>
-
-struct Frame;
+#include <Eigen/Core>
+#include <opencv2/opencv.hpp>
 
 struct Feature {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
     Feature(){}
-    typedef std::shared_ptr<Feature> Ptr;
+    Feature(const cv::Point2f &point)
+            : point_(point) {}
 
-    std::weak_ptr<Frame> frame_;
-    cv::KeyPoint position_;
+    cv::Point2f point_;
 };
 
 #endif //VISUAL_SLAM_FEATURE_H
