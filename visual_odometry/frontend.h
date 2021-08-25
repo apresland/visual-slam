@@ -9,6 +9,7 @@
 constexpr unsigned int NUMBER_GRID_CELL_ROWS = 8;
 constexpr unsigned int NUMBER_GRID_CELL_COLS = 16;
 constexpr unsigned int MAX_FEATURES_PER_CELL = 10;
+constexpr unsigned int MIN_FEATURE_COUNT = 500;
 
 class Frontend {
 
@@ -27,9 +28,13 @@ private:
     int initialize();
     int track();
     int restart();
-    int detect_features(cv::Mat &image);
-    void assign_features_to_grid(std::vector<cv::KeyPoint> keypoints);
-    bool position_in_grid(cv::KeyPoint &keypoint, int &grid_pos_x, int &grid_pos_y);
+    int detect_features(cv::Mat &image, std::vector<cv::Point2f> &current_features);
+    int match_features(
+            cv::Mat imgL_t0, cv::Mat imgR_t0, cv::Mat imgL_t1, cv::Mat imgR_t1,
+            std::vector<cv::Point2f> &ptsL_t0, std::vector<cv::Point2f> &ptsR_t0,
+            std::vector<cv::Point2f> &ptsL_t1, std::vector<cv::Point2f> &ptsR_t1,
+            std::vector<cv::Point2f> &ptsL_t0_return);
+    bool position_in_grid(cv::Point2f &point, int &grid_pos_x, int &grid_pos_y);
 
     cv::Ptr<cv::FeatureDetector> detector_;
     cv::Ptr<cv::DescriptorExtractor> descriptor_;
@@ -41,7 +46,8 @@ private:
     std::shared_ptr<Camera> camera_right_{nullptr};
     std::shared_ptr<Viewer> viewer_ = nullptr;
 
-    std::vector<cv::KeyPoint> feature_grid_[NUMBER_GRID_CELL_COLS][NUMBER_GRID_CELL_ROWS];
+    std::vector<cv::Point2f> current_features_;
+    std::vector<cv::Point2f> feature_grid_[NUMBER_GRID_CELL_COLS][NUMBER_GRID_CELL_ROWS];
 
     Status status_{INITIALIZING};
 };
