@@ -2,14 +2,13 @@
 #define VISUAL_SLAM_FRONTEND_H
 
 #include <memory>
-#include "frame.h"
 #include "camera.h"
+#include "detector.h"
+#include "tracker.h"
 #include "viewer.h"
 
-constexpr unsigned int NUMBER_GRID_CELL_ROWS = 8;
-constexpr unsigned int NUMBER_GRID_CELL_COLS = 16;
-constexpr unsigned int MAX_FEATURES_PER_CELL = 10;
-constexpr unsigned int MIN_FEATURE_COUNT = 500;
+constexpr unsigned int MIN_FEATURE_COUNT = 1000;
+constexpr float IMAGE_SCALE_FACTOR = 1.0;
 
 class Frontend {
 
@@ -17,7 +16,7 @@ public:
     enum Status {INITIALIZING, LOST, TRACKING};
 public:
     Frontend();
-    void process(std::shared_ptr<Frame> frame);
+    void update(const cv::Mat &image_left, const cv::Mat &image_right);
     void set_viewer(std::shared_ptr<Viewer> viewer) { viewer_ = viewer; }
     void set_cameras(std::shared_ptr<Camera> camera_left, std::shared_ptr<Camera> camera_right) {
         camera_left_ = camera_left;
@@ -25,30 +24,33 @@ public:
     }
 
 private:
-    int initialize();
-    int track();
+    int initialize(const cv::Mat &image_left_t1);
+    int process(const cv::Mat &image_left_t0, const cv::Mat &image_right_t0,
+                const cv::Mat &image_left_t1, const cv::Mat &image_right_t1);
     int restart();
-    int detect_features(cv::Mat &image, std::vector<cv::Point2f> &current_features);
-    int match_features(
-            cv::Mat imgL_t0, cv::Mat imgR_t0, cv::Mat imgL_t1, cv::Mat imgR_t1,
-            std::vector<cv::Point2f> &ptsL_t0, std::vector<cv::Point2f> &ptsR_t0,
-            std::vector<cv::Point2f> &ptsL_t1, std::vector<cv::Point2f> &ptsR_t1,
-            std::vector<cv::Point2f> &ptsL_t0_return);
-    bool position_in_grid(cv::Point2f &point, int &grid_pos_x, int &grid_pos_y);
 
-    cv::Ptr<cv::FeatureDetector> detector_;
-    cv::Ptr<cv::DescriptorExtractor> descriptor_;
-    cv::Ptr<cv::DescriptorMatcher> matcher_;
+    void estimate_motion(const std::vector<cv::Point2f>&  image_points_2d,
+                         const cv::Mat& object_points_3d,
+                         const cv::Mat K,
+                         const cv::Mat& R,
+                         const cv::Mat& t);
 
-    std::shared_ptr<Frame> current_frame_ = nullptr;
-    std::shared_ptr<Frame> previous_frame_ = nullptr;
+    void update_pose(cv::Mat& pose,
+                     const cv::Mat& R,
+                     const cv::Mat& t);
+
+    Detector detector_;
+    Tracker tracker_;
     std::shared_ptr<Camera> camera_left_{nullptr};
     std::shared_ptr<Camera> camera_right_{nullptr};
     std::shared_ptr<Viewer> viewer_ = nullptr;
 
-    std::vector<cv::Point2f> current_features_;
-    std::vector<cv::Point2f> feature_grid_[NUMBER_GRID_CELL_COLS][NUMBER_GRID_CELL_ROWS];
+    cv::Mat image_left_t0;
+    cv::Mat image_right_t0;
+    std::vector<cv::Point2f> features_;
+    cv::Mat pose_ = cv::Mat::eye(4, 4, CV_64F);
 
+    size_t frame_id_;
     Status status_{INITIALIZING};
 };
 

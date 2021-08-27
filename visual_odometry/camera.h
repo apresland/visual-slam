@@ -11,9 +11,9 @@ class Camera {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
     Camera();
-    Camera(double fx, double fy, double cx, double cy, double bf, Sophus::SE3d pose)
-        : fx_(fx), fy_(fy), cx_(cx), cy_(cy), bf_(bf), pose_(pose) {
-        pose_inverse_ = pose_.inverse();
+    Camera(double fx, double fy, double cx, double cy, double bf)
+        : fx_(fx), fy_(fy), cx_(cx), cy_(cy), bf_(bf) {
+        baseline_ = -bf_/fx_;
     }
 
     double fx_{0.0};
@@ -21,6 +21,7 @@ public:
     double cx_{0.0};
     double cy_{0.0};
     double bf_{0.0};
+    double baseline_{0.0};
 
     Sophus::SE3d pose_;
     Sophus::SE3d pose_inverse_;

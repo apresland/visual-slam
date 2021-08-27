@@ -10,7 +10,6 @@
 #include <Eigen/Core>
 #include <opencv2/core/core.hpp>
 #include <opencv4/opencv2/opencv.hpp>
-#include "frame.h"
 
 class Sequence {
 
@@ -26,6 +25,7 @@ public:
     Sequence(std::string sequence_path);
     bool Init();
     std::vector<std::shared_ptr<StereoPair>> elements_;
+
 private:
     void LoadFrames(std::string filepath);
     std::string loadImageLeft(int frame_index, std::string image_filepath);

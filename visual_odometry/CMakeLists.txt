@@ -22,7 +22,15 @@ include_directories(${Pangolin_INCLUDE_DIRS})
 find_package(Sophus REQUIRED)
 include_directories(${Sophus_INCLUDE_DIRS})
 
-add_executable(stereo kittislam.cpp odometry.h odometry.cpp frontend.h frontend.cpp frame.h feature.h sequence.h sequence.cpp camera.h camera.cpp viewer.h viewer.cpp)
+add_executable(stereo
+        vo_main.cpp
+        system.h system.cpp
+        frontend.h frontend.cpp
+        sequence.h sequence.cpp
+        camera.h camera.cpp
+        detector.h detector.cpp
+        tracker.h tracker.cpp
+        viewer.h viewer.cpp)
 target_link_libraries(stereo
         ${OpenCV_LIBS}
         ${Sophus_LIBRARIES}

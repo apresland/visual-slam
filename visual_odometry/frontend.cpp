@@ -2,175 +2,125 @@
 #include <opencv2/opencv.hpp>
 #include <sophus/se3.hpp>
 #include <sophus/so3.hpp>
-#include "feature.h"
 #include "frontend.h"
 
-Frontend::Frontend() {
-    detector_ = cv::FastFeatureDetector::create(20, true);
-}
+Frontend::Frontend() {}
 
-void Frontend::process(std::shared_ptr<Frame> frame) {
-
-    current_frame_ = frame;
+void Frontend::update(const cv::Mat &image_left_t1, const cv::Mat &image_right_t1) {
 
     switch (status_) {
         case INITIALIZING:
-            initialize();
+            initialize(image_left_t1);
             break;
         case TRACKING:
-            track();
+            process(image_left_t0, image_right_t0, image_left_t1, image_right_t1);
             break;
         case LOST:
             restart();
             break;
     }
 
-    if(viewer_) {
-        viewer_->view(previous_frame_, current_frame_, current_features_);
-    }
-
-    previous_frame_ = current_frame_;
+    image_left_t1.copyTo(image_left_t0);
+    image_right_t1.copyTo(image_right_t0);
 }
 
-int Frontend::initialize() {
-    detect_features(current_frame_->image_left_, current_features_);
+int Frontend::initialize(const cv::Mat &image_left_t1) {
+    frame_id_ = 0;
+    viewer_->load_poses();
+    detector_.detect(image_left_t1, features_);
     status_ = TRACKING;
 }
 
-int Frontend::track() {
+int Frontend::process(const cv::Mat &image_left_t0, const cv::Mat &image_right_t0,
+                      const cv::Mat &image_left_t1, const cv::Mat &image_right_t1) {
 
-    // input images
-    cv::Mat &imgL_t0 = previous_frame_->image_left_;
-    cv::Mat &imgR_t0 = previous_frame_->image_right_;
-    cv::Mat &imgL_t1 = current_frame_->image_left_;
-    cv::Mat &imgR_t1 = current_frame_->image_right_;
+    ++frame_id_;
 
-    // circular feature matching outputs
-    std::vector<cv::Point2f> ptsL_t0, ptsR_t0, ptsL_t1, ptsR_t1;
     std::vector<cv::Point2f>  matched_features;
+    std::vector<cv::Point2f> points_left_t0, points_right_t0, points_left_t1, points_right_t1;
 
-    // create more features when count low
-    if (current_features_.size() < MIN_FEATURE_COUNT) {
-        detect_features(imgL_t0, current_features_);
+    // -----------------------------------------------------------------------------------------------------------------
+    // Detect features : FAST keypoint detection with grid-based bucketing
+    // -----------------------------------------------------------------------------------------------------------------
+    if (features_.size() < MIN_FEATURE_COUNT) {
+        detector_.detect(image_left_t0, features_);
     }
 
-    // stereo match features
-    ptsL_t0 = current_features_;
-    match_features(imgL_t0, imgR_t0,imgL_t1, imgR_t1,
-                        ptsL_t0, ptsR_t0,ptsL_t1, ptsR_t1,
-                        matched_features);
+    // -----------------------------------------------------------------------------------------------------------------
+    // Track Features : Lucas-Kanade tracking with circular matching.
+    // -----------------------------------------------------------------------------------------------------------------
+    points_left_t0 = features_;
+    tracker_.track(image_left_t0, image_right_t0, image_left_t1, image_right_t1,
+                   points_left_t0, points_right_t0, points_left_t1, points_right_t1,
+                   matched_features);
 
-    current_features_ = ptsL_t1;
+    // -----------------------------------------------------------------------------------------------------------------
+    // Triangulate 3D Points :
+    // -----------------------------------------------------------------------------------------------------------------
+    cv::Mat proj_matrix_left = camera_left_->P();
+    cv::Mat proj_matrix_right = camera_right_->P();
+    cv::Mat points3D_t0, points4D_t0;
+    cv::triangulatePoints( proj_matrix_left,  proj_matrix_right,  points_left_t0,  points_right_t0,  points4D_t0);
+    cv::convertPointsFromHomogeneous(points4D_t0.t(), points3D_t0);
+
+    // -----------------------------------------------------------------------------------------------------------------
+    // Estimate Motion :
+    // -----------------------------------------------------------------------------------------------------------------
+    cv::Mat R = cv::Mat::eye(3, 3, CV_64F);
+    cv::Mat t = cv::Mat::zeros(3, 1, CV_64F);
+    estimate_motion(points_left_t1, points3D_t0, camera_left_->K(), R, t);
+    features_ = points_left_t1;
+
+    // -----------------------------------------------------------------------------------------------------------------
+    // Update Pose :
+    // -----------------------------------------------------------------------------------------------------------------
+    update_pose(pose_, R, t);
+
+    // -----------------------------------------------------------------------------------------------------------------
+    // Visualize Results :
+    // -----------------------------------------------------------------------------------------------------------------
+    viewer_->display_features(image_left_t1, points_left_t1);
+    viewer_->display_tracking(image_left_t1, points_left_t0, points_left_t1);
+    viewer_->display_trajectory(pose_, frame_id_);
 }
 
 int Frontend::restart() {
 
 }
 
-int Frontend::detect_features(cv::Mat &image, std::vector<cv::Point2f> &current_features) {
-
-    // detect features with FAST
-    std::vector<cv::KeyPoint> keypoints;
-    detector_->detect(image, keypoints);
-    std::vector<cv::Point2f> points;
-    cv::KeyPoint::convert(keypoints, points);
-    current_features.insert(current_features.end(), points.begin(), points.end());
-    for (auto &keypoint : keypoints) {
-        current_frame_->keypoints_left_.push_back(keypoint);
-    }
-
-    auto sort_predicate = [](cv::KeyPoint const& kp1, cv::KeyPoint const& kp2)-> bool {
-        return kp1.response > kp2.response;
-    };
-
-    // clear feature grid before repopulating
-    for(int x =0; x < NUMBER_GRID_CELL_COLS; ++x) {
-        for(int y =0; y < NUMBER_GRID_CELL_ROWS; ++y) {
-            feature_grid_[x][y].clear();
-        }
-    }
-
-    // populate the grid with current features
-    for (auto &point : current_features) {
-        int x, y;
-        if(position_in_grid(point, x, y))
-            feature_grid_[x][y].push_back(point);
-    }
-
-    // flatten grid with filtering
-    current_features.clear();
-    for(int x =0; x < NUMBER_GRID_CELL_COLS; ++x) {
-        for(int y =0; y < NUMBER_GRID_CELL_ROWS; ++y) {
-            unsigned int count = 0;
-            //std::sort(feature_grid_[x][y].begin(), feature_grid_[x][y].end(), sort_predicate);
-            for (auto &point : feature_grid_[x][y]) {
-                if (count >= MAX_FEATURES_PER_CELL) continue;
-                std::shared_ptr<Feature> feature = std::make_shared<Feature>(point);
-                current_frame_->features_left_.push_back(feature);
-                current_features.push_back(point);
-                ++count;
-            }
-        }
-    }
+// 3D-to-2D: Motion from 3D structure and 2D image feature correspondence.
+// Use the Perspective-n-Point (PnP) algorithm to provide "perspective-from-3-points" (P3P). Estimates
+// the camera pose (t,r) that minimizes the reprojection error of 3D points onto the 2D image. Convert the
+// rotation vector (r) into a rotation matrix (R) with Rodrigues algorithm.
+void Frontend::estimate_motion(const std::vector<cv::Point2f>&  image_points_2d,
+                               const cv::Mat& object_points_3d,
+                               const cv::Mat K,
+                               const cv::Mat& R,
+                               const cv::Mat& t)
+{
+    cv::Mat inliers;
+    cv::Mat coeffs = cv::Mat::zeros(4, 1, CV_64FC1);
+    cv::Mat r = cv::Mat::zeros(3, 1, CV_64FC1);
+    cv::solvePnPRansac( object_points_3d, image_points_2d, K, coeffs, r, t,
+                        false, 100, 8.0, 0.99,inliers );
+    cv::Rodrigues(r, R);
+    std::cout << "Inliers: " << inliers << std::endl;
 }
 
-int Frontend::match_features(
-        cv::Mat imgL_t0, cv::Mat imgR_t0, cv::Mat imgL_t1, cv::Mat imgR_t1,
-        std::vector<cv::Point2f> &ptsL_t0, std::vector<cv::Point2f> &ptsR_t0,
-        std::vector<cv::Point2f> &ptsL_t1, std::vector<cv::Point2f> &ptsR_t1,
-        std::vector<cv::Point2f> &ptsL_t0_return){
+void Frontend::update_pose(cv::Mat& pose, const cv::Mat& R, const cv::Mat& t)
+{
+    cv::Mat T_c_w;
+    cv::Mat sum = (cv::Mat_<double>(1, 4) << 0, 0, 0, 1);
+    cv::hconcat(R, t, T_c_w);
+    cv::vconcat(T_c_w, sum, T_c_w);
+    T_c_w = T_c_w.inv();
 
-    std::vector<float> err;
-    cv::Size window_size=cv::Size(21,21);
-    cv::TermCriteria term_criteria = cv::TermCriteria(cv::TermCriteria::COUNT+cv::TermCriteria::EPS, 30, 0.01);
-
-    std::vector<uchar> status_0;
-    std::vector<uchar> status_1;
-    std::vector<uchar> status_2;
-    std::vector<uchar> status_3;
-
-    // circular matching with LK optical flow
-    calcOpticalFlowPyrLK(imgL_t0, imgL_t1, ptsL_t0, ptsL_t1, status_0, err, window_size, 3, term_criteria, 0, 0.001);
-    calcOpticalFlowPyrLK(imgL_t1, imgR_t1, ptsL_t1, ptsR_t1, status_1, err, window_size, 3, term_criteria, 0, 0.001);
-    calcOpticalFlowPyrLK(imgR_t1, imgR_t0, ptsR_t1, ptsR_t0, status_2, err, window_size, 3, term_criteria, 0, 0.001);
-    calcOpticalFlowPyrLK(imgR_t0, imgL_t0, ptsR_t0, ptsL_t0_return, status_3, err, window_size, 3, term_criteria, 0, 0.001);
-
-    // filter out bad matches
-    int deletion_correction = 0;
-    for(int i=0; i < status_3.size(); i++)
-    {
-        // get next points respecting prior deletions
-        cv::Point2f point_0 = ptsL_t0.at(i - deletion_correction);
-        cv::Point2f point_1 = ptsR_t0.at(i - deletion_correction);
-        cv::Point2f point_2 = ptsL_t1.at(i - deletion_correction);
-        cv::Point2f point_3 = ptsR_t1.at(i - deletion_correction);
-
-        // check for bad status and out-of-frame points
-        if ((status_3.at(i) == 0) || (point_3.x < 0) || (point_3.y < 0) ||
-            (status_2.at(i) == 0) || (point_2.x < 0) || (point_2.y < 0) ||
-            (status_1.at(i) == 0) || (point_1.x < 0) || (point_1.y < 0) ||
-            (status_0.at(i) == 0) || (point_0.x < 0) || (point_0.y < 0))
-        {
-            // erase bad matches
-            ptsL_t0.erase (ptsL_t0.begin() + (i - deletion_correction));
-            ptsR_t0.erase (ptsR_t0.begin() + (i - deletion_correction));
-            ptsL_t1.erase (ptsL_t1.begin() + (i - deletion_correction));
-            ptsR_t1.erase (ptsR_t1.begin() + (i - deletion_correction));
-            ptsL_t0_return.erase (ptsL_t0_return.begin() + (i - deletion_correction));
-
-            deletion_correction++;
-        }
+    double scale = sqrt((t.at<double>(0)) * (t.at<double>(0))
+                        + (t.at<double>(1)) * (t.at<double>(1))
+                        + (t.at<double>(2)) * (t.at<double>(2))) ;
+    if (scale > 0.05 && scale < 10) {
+        pose = pose * T_c_w;
+    } else {
+        std::cout << "[WARNING] Pose not updated due to out-of-bounds scale value" << scale << std::endl;
     }
 }
-
-bool Frontend::position_in_grid(cv::Point2f &point, int &grid_pos_x, int &grid_pos_y) {
-    float grid_cell_width_inverse = static_cast<float>(NUMBER_GRID_CELL_COLS) / (current_frame_->image_left_.cols);
-    float grid_cell_height_inverse = static_cast<float>(NUMBER_GRID_CELL_ROWS) / (current_frame_->image_left_.rows);
-    grid_pos_x = round((point.x)*grid_cell_width_inverse);
-    grid_pos_y = round((point.y)*grid_cell_height_inverse);
-    if(grid_pos_x<0 || grid_pos_x >= NUMBER_GRID_CELL_COLS || grid_pos_y < 0 || grid_pos_y >= NUMBER_GRID_CELL_ROWS)
-        return false;
-
-    return true;
-}
-
