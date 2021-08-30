@@ -1,9 +1,10 @@
-ARG cuda_version=9.0
-ARG ubuntu_version=16.04
+ARG cuda_version=11.4.1
+ARG ubuntu_version=18.04
 
 FROM nvidia/cudagl:${cuda_version}-devel-ubuntu${ubuntu_version}
 
-RUN rm /etc/apt/sources.list.d/nvidia-ml.list && apt-get clean && apt-get update
+#RUN rm /etc/apt/sources.list.d/nvidia-ml.list
+RUN apt-get clean && apt-get update
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
   apt-utils \
   build-essential \
@@ -68,14 +69,12 @@ RUN useradd -ms /bin/bash dev
 RUN echo 'dev:dev' | chpasswd
 
 # generate pangolin
-WORKDIR /home/dev
-RUN git clone https://github.com/stevenlovegrove/Pangolin.git
-
-# install pangolin
-WORKDIR /home/dev/Pangolin/build
-RUN cmake ..
-RUN make
-RUN make install
+#WORKDIR /home/dev
+#RUN git clone https://github.com/stevenlovegrove/Pangolin.git
+#WORKDIR /home/dev/Pangolin/build
+#RUN cmake ..
+#RUN make
+#RUN make install
 
 # install opencv
 WORKDIR /home/dev/
@@ -102,6 +101,14 @@ RUN make install
 WORKDIR /home/dev/
 RUN git clone https://github.com/strasdat/Sophus
 WORKDIR /home/dev/Sophus/build
+RUN cmake -DUSE_BASIC_LOGGING=ON ..
+RUN make
+RUN make install
+
+# install g2o
+WORKDIR /home/dev/
+RUN git clone https://github.com/RainerKuemmerle/g2o
+WORKDIR /home/dev/g2o/build
 RUN cmake ..
 RUN make
 RUN make install
