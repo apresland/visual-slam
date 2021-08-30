@@ -64,24 +64,17 @@ int Frontend::process(const cv::Mat &image_left_t0, const cv::Mat &image_right_t
     cv::convertPointsFromHomogeneous(points4D_t0.t(), points3D_t0);
 
     // -----------------------------------------------------------------------------------------------------------------
-    // Estimate Motion :
+    // Estimate Pose :
     // -----------------------------------------------------------------------------------------------------------------
-    cv::Mat R = cv::Mat::eye(3, 3, CV_64F);
-    cv::Mat t = cv::Mat::zeros(3, 1, CV_64F);
-    estimate_motion(points_left_t1, points3D_t0, camera_left_->K(), R, t);
+    estimate_pose_3d2d_ransac(points_left_t1, points3D_t0, camera_left_->K(), T_c_w_);
     features_ = points_left_t1;
-
-    // -----------------------------------------------------------------------------------------------------------------
-    // Update Pose :
-    // -----------------------------------------------------------------------------------------------------------------
-    update_pose(pose_, R, t);
 
     // -----------------------------------------------------------------------------------------------------------------
     // Visualize Results :
     // -----------------------------------------------------------------------------------------------------------------
     viewer_->display_features(image_left_t1, points_left_t1);
     viewer_->display_tracking(image_left_t1, points_left_t0, points_left_t1);
-    viewer_->display_trajectory(pose_, frame_id_);
+    viewer_->display_trajectory(T_c_w_, frame_id_);
 }
 
 int Frontend::restart() {
@@ -92,35 +85,38 @@ int Frontend::restart() {
 // Use the Perspective-n-Point (PnP) algorithm to provide "perspective-from-3-points" (P3P). Estimates
 // the camera pose (t,r) that minimizes the reprojection error of 3D points onto the 2D image. Convert the
 // rotation vector (r) into a rotation matrix (R) with Rodrigues algorithm.
-void Frontend::estimate_motion(const std::vector<cv::Point2f>&  image_points_2d,
-                               const cv::Mat& object_points_3d,
-                               const cv::Mat K,
-                               const cv::Mat& R,
-                               const cv::Mat& t)
+int Frontend::estimate_pose_3d2d_ransac(const std::vector<cv::Point2f>&  image_points_2d,
+                                        const cv::Mat& object_points_3d,
+                                        const cv::Mat K,
+                                        Sophus::SE3d &T_c_w)
 {
     cv::Mat inliers;
     cv::Mat coeffs = cv::Mat::zeros(4, 1, CV_64FC1);
+    cv::Mat t = cv::Mat::zeros(3, 1, CV_64F);
     cv::Mat r = cv::Mat::zeros(3, 1, CV_64FC1);
     cv::solvePnPRansac( object_points_3d, image_points_2d, K, coeffs, r, t,
                         false, 100, 8.0, 0.99,inliers );
+    cv::Mat R = cv::Mat::eye(3, 3, CV_64F);
     cv::Rodrigues(r, R);
-    std::cout << "Inliers: " << inliers << std::endl;
-}
 
-void Frontend::update_pose(cv::Mat& pose, const cv::Mat& R, const cv::Mat& t)
-{
-    cv::Mat T_c_w;
-    cv::Mat sum = (cv::Mat_<double>(1, 4) << 0, 0, 0, 1);
-    cv::hconcat(R, t, T_c_w);
-    cv::vconcat(T_c_w, sum, T_c_w);
-    T_c_w = T_c_w.inv();
+    // Relative motion (T)
+    Eigen::Matrix3d SO3_R;
+    Eigen::Vector3d SO3_t;
+    SO3_R << R.at<double>(0, 0), R.at<double>(0, 1), R.at<double>(0, 2),
+            R.at<double>(1, 0), R.at<double>(1, 1), R.at<double>(1, 2),
+            R.at<double>(2, 0), R.at<double>(2, 1), R.at<double>(2, 2);
+    SO3_t << t.at<double>(0, 0), t.at<double>(1, 0), t.at<double>(2, 0);
+    Sophus::SE3d T = Sophus::SE3d(SO3_R, SO3_t);
 
-    double scale = sqrt((t.at<double>(0)) * (t.at<double>(0))
-                        + (t.at<double>(1)) * (t.at<double>(1))
-                        + (t.at<double>(2)) * (t.at<double>(2))) ;
-    if (scale > 0.05 && scale < 10) {
-        pose = pose * T_c_w;
+    // Scale of motion check
+    double motion_scale = sqrt(T.translation().x() * T.translation().x()
+                        + T.translation().y() * T.translation().y()
+                        + T.translation().z() * T.translation().z());
+    if (motion_scale > 0.05 && motion_scale < 10) {
+        T_c_w = T_c_w * T.inverse();
     } else {
-        std::cout << "[WARNING] Pose not updated due to out-of-bounds scale value" << scale << std::endl;
+        std::cout << "[WARNING] Pose not updated due to out-of-bounds scale value" << motion_scale << std::endl;
     }
+
+    return inliers.rows;
 }

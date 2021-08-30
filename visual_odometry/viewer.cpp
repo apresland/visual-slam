@@ -57,14 +57,13 @@ void Viewer::display_tracking(const cv::Mat &image_left_t1, std::vector<cv::Poin
     cv::imshow("Optical flow ", vis );
 }
 
-void Viewer::display_trajectory(cv::Mat& pose, unsigned int true_pose_id) {
+void Viewer::display_trajectory(Sophus::SE3d T_c_w, unsigned int true_pose_id) {
 
-    cv::Mat xyz = pose.col(3).clone();
-
-    // estimated trajectory
-    int x = int(xyz.at<double>(0)) + 300;
-    int y = int(xyz.at<double>(2)) + 100;
-    cv::circle(trajectory_, cv::Point(x, y) ,1, CV_RGB(255,0,0), 2);
+    Eigen::Matrix3d rotation = T_c_w.rotationMatrix();
+    Eigen::Vector3d translation = T_c_w.translation();
+    int x = int(translation[0]) + 300;
+    int y = int(translation[2]) + 100;
+    cv::circle(trajectory_, cv::Point(x, y) ,1, CV_RGB(0,0,255), 2);
 
     // ground truth
     cv::Mat pose_gt = cv::Mat::zeros(1, 3, CV_64F);
@@ -74,7 +73,6 @@ void Viewer::display_trajectory(cv::Mat& pose, unsigned int true_pose_id) {
     x = int(pose_gt.at<double>(0)) + 300;
     y = int(pose_gt.at<double>(2)) + 100;
     cv::circle(trajectory_, cv::Point(x, y) ,1, CV_RGB(0,255,0), 2);
-
     cv::imshow( "Trajectory", trajectory_ );
     cv::waitKey(1);
 }

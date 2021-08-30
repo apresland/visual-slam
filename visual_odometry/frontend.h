@@ -2,6 +2,7 @@
 #define VISUAL_SLAM_FRONTEND_H
 
 #include <memory>
+#include "sophus/se3.hpp"
 #include "camera.h"
 #include "detector.h"
 #include "tracker.h"
@@ -29,15 +30,10 @@ private:
                 const cv::Mat &image_left_t1, const cv::Mat &image_right_t1);
     int restart();
 
-    void estimate_motion(const std::vector<cv::Point2f>&  image_points_2d,
-                         const cv::Mat& object_points_3d,
-                         const cv::Mat K,
-                         const cv::Mat& R,
-                         const cv::Mat& t);
-
-    void update_pose(cv::Mat& pose,
-                     const cv::Mat& R,
-                     const cv::Mat& t);
+    int estimate_pose_3d2d_ransac(const std::vector<cv::Point2f>&  image_points_2d,
+                                  const cv::Mat& object_points_3d,
+                                  const cv::Mat K,
+                                  Sophus::SE3d &T_c_w);
 
     Detector detector_;
     Tracker tracker_;
@@ -48,7 +44,8 @@ private:
     cv::Mat image_left_t0;
     cv::Mat image_right_t0;
     std::vector<cv::Point2f> features_;
-    cv::Mat pose_ = cv::Mat::eye(4, 4, CV_64F);
+
+    Sophus::SE3d T_c_w_ = Sophus::SE3d(); // T_camera_world
 
     size_t frame_id_;
     Status status_{INITIALIZING};
