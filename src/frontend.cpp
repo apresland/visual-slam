@@ -6,53 +6,46 @@
 
 Frontend::Frontend() {}
 
-void Frontend::update(const cv::Mat &image_left_t1, const cv::Mat &image_right_t1) {
+void Frontend::update(std::shared_ptr<Frame> frame) {;
+
+    frame_t1_ = frame;
 
     switch (status_) {
         case INITIALIZING:
-            initialize(image_left_t1);
+            initialize(frame_t1_);
             break;
         case TRACKING:
-            process(image_left_t0, image_right_t0, image_left_t1, image_right_t1);
+            process(frame_t0_, frame_t1_);
             break;
         case LOST:
             restart();
             break;
     }
 
-    image_left_t1.copyTo(image_left_t0);
-    image_right_t1.copyTo(image_right_t0);
+    frame_t0_ = frame_t1_;
+    ++frame_id_;
 }
 
-int Frontend::initialize(const cv::Mat &image_left_t1) {
+int Frontend::initialize(std::shared_ptr<Frame> frame_t1) {
     frame_id_ = 0;
     viewer_->load_poses();
-    detector_.detect(image_left_t1, features_);
+    detector_.detect(frame_t1->image_left_, frame_t1->points_left_);
     status_ = TRACKING;
 }
 
-int Frontend::process(const cv::Mat &image_left_t0, const cv::Mat &image_right_t0,
-                      const cv::Mat &image_left_t1, const cv::Mat &image_right_t1) {
-
-    ++frame_id_;
-
-    std::vector<cv::Point2f>  matched_features;
-    std::vector<cv::Point2f> points_left_t0, points_right_t0, points_left_t1, points_right_t1;
+int Frontend::process(std::shared_ptr<Frame> frame_t0, std::shared_ptr<Frame> frame_t1) {
 
     // -----------------------------------------------------------------------------------------------------------------
     // Detect features : FAST keypoint detection with grid-based bucketing
     // -----------------------------------------------------------------------------------------------------------------
-    if (features_.size() < MIN_FEATURE_COUNT) {
-        detector_.detect(image_left_t0, features_);
+    if (frame_t0->points_left_.size() < MIN_FEATURE_COUNT) {
+        detector_.detect(frame_t0->image_left_, frame_t0->points_left_);
     }
 
     // -----------------------------------------------------------------------------------------------------------------
     // Track Features : Lucas-Kanade tracking with circular matching.
     // -----------------------------------------------------------------------------------------------------------------
-    points_left_t0 = features_;
-    tracker_.track(image_left_t0, image_right_t0, image_left_t1, image_right_t1,
-                   points_left_t0, points_right_t0, points_left_t1, points_right_t1,
-                   matched_features);
+    tracker_.track(frame_t0, frame_t1);
 
     // -----------------------------------------------------------------------------------------------------------------
     // Triangulate 3D Points :
@@ -60,20 +53,19 @@ int Frontend::process(const cv::Mat &image_left_t0, const cv::Mat &image_right_t
     cv::Mat proj_matrix_left = camera_left_->P();
     cv::Mat proj_matrix_right = camera_right_->P();
     cv::Mat points3D_t0, points4D_t0;
-    cv::triangulatePoints( proj_matrix_left,  proj_matrix_right,  points_left_t0,  points_right_t0,  points4D_t0);
+    cv::triangulatePoints( proj_matrix_left,  proj_matrix_right,  frame_t0->points_left_,  frame_t0->points_right_,  points4D_t0);
     cv::convertPointsFromHomogeneous(points4D_t0.t(), points3D_t0);
 
     // -----------------------------------------------------------------------------------------------------------------
     // Estimate Pose :
     // -----------------------------------------------------------------------------------------------------------------
-    estimate_pose_3d2d_ransac(points_left_t1, points3D_t0, camera_left_->K(), T_c_w_);
-    features_ = points_left_t1;
+    estimate_pose_3d2d_ransac(frame_t1->points_left_, points3D_t0, camera_left_->K(), T_c_w_);
 
     // -----------------------------------------------------------------------------------------------------------------
     // Visualize Results :
     // -----------------------------------------------------------------------------------------------------------------
-    viewer_->display_features(image_left_t1, points_left_t1);
-    viewer_->display_tracking(image_left_t1, points_left_t0, points_left_t1);
+    viewer_->display_features(frame_t1->image_left_, frame_t1->points_left_);
+    viewer_->display_tracking(frame_t1->image_left_, frame_t0->points_left_, frame_t1->points_left_);
     viewer_->display_trajectory(T_c_w_, frame_id_);
 }
 

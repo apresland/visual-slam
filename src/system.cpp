@@ -6,6 +6,7 @@
 #include <Eigen/Geometry>
 #include <sophus/se3.hpp>
 #include "system.h"
+#include "frame.h"
 #include "viewer.h"
 #include "frontend.h"
 
@@ -59,6 +60,9 @@ void System::Run() {
         cv::resize(image_right, image_right_resized, cv::Size(), IMAGE_SCALE_FACTOR, IMAGE_SCALE_FACTOR,
                    cv::INTER_NEAREST);
 
-        frontend->update(image_left_resized, image_right_resized);
+        std::shared_ptr<Frame> next_frame = std::make_shared<Frame>();
+        next_frame->image_left_ = image_left_resized;
+        next_frame->image_right_ = image_right_resized;
+        frontend->update(next_frame);
     }
 }

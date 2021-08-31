@@ -1,9 +1,8 @@
 #include "tracker.h"
 
-void Tracker::track(cv::Mat imgL_t0, cv::Mat imgR_t0, cv::Mat imgL_t1, cv::Mat imgR_t1,
-                    std::vector<cv::Point2f> &ptsL_t0, std::vector<cv::Point2f> &ptsR_t0,
-                    std::vector<cv::Point2f> &ptsL_t1, std::vector<cv::Point2f> &ptsR_t1,
-                    std::vector<cv::Point2f> &ptsL_t0_return) {
+void Tracker::track(std::shared_ptr<Frame> frame_t0, std::shared_ptr<Frame> frame_t1) {
+
+    std::vector<cv::Point2f>  ptsL_t0_return;
 
     std::vector<float> err;
     cv::Size window_size=cv::Size(21,21);
@@ -15,20 +14,20 @@ void Tracker::track(cv::Mat imgL_t0, cv::Mat imgR_t0, cv::Mat imgL_t1, cv::Mat i
     std::vector<uchar> status_3;
 
     // circular matching with LK optical flow
-    calcOpticalFlowPyrLK(imgL_t0, imgL_t1, ptsL_t0, ptsL_t1, status_0, err, window_size, 3, term_criteria, 0, 0.001);
-    calcOpticalFlowPyrLK(imgL_t1, imgR_t1, ptsL_t1, ptsR_t1, status_1, err, window_size, 3, term_criteria, 0, 0.001);
-    calcOpticalFlowPyrLK(imgR_t1, imgR_t0, ptsR_t1, ptsR_t0, status_2, err, window_size, 3, term_criteria, 0, 0.001);
-    calcOpticalFlowPyrLK(imgR_t0, imgL_t0, ptsR_t0, ptsL_t0_return, status_3, err, window_size, 3, term_criteria, 0, 0.001);
+    calcOpticalFlowPyrLK(frame_t0->image_left_, frame_t1->image_left_, frame_t0->points_left_, frame_t1->points_left_, status_0, err, window_size, 3, term_criteria, 0, 0.001);
+    calcOpticalFlowPyrLK(frame_t1->image_left_, frame_t1->image_right_, frame_t1->points_left_, frame_t1->points_right_, status_1, err, window_size, 3, term_criteria, 0, 0.001);
+    calcOpticalFlowPyrLK(frame_t1->image_right_, frame_t0->image_right_, frame_t1->points_right_, frame_t0->points_right_, status_2, err, window_size, 3, term_criteria, 0, 0.001);
+    calcOpticalFlowPyrLK(frame_t0->image_right_, frame_t0->image_left_, frame_t0->points_right_, ptsL_t0_return, status_3, err, window_size, 3, term_criteria, 0, 0.001);
 
     // filter out bad matches
     int deletion_correction = 0;
     for(int i=0; i < status_3.size(); i++)
     {
         // get next points respecting prior deletions
-        cv::Point2f point_0 = ptsL_t0.at(i - deletion_correction);
-        cv::Point2f point_1 = ptsR_t0.at(i - deletion_correction);
-        cv::Point2f point_2 = ptsL_t1.at(i - deletion_correction);
-        cv::Point2f point_3 = ptsR_t1.at(i - deletion_correction);
+        cv::Point2f point_0 = frame_t0->points_left_.at(i - deletion_correction);
+        cv::Point2f point_1 = frame_t0->points_right_.at(i - deletion_correction);
+        cv::Point2f point_2 = frame_t1->points_left_.at(i - deletion_correction);
+        cv::Point2f point_3 = frame_t1->points_right_.at(i - deletion_correction);
 
         // check for failed KLT or out-of-frame points
         if ((status_3.at(i) == 0) || (point_3.x < 0) || (point_3.y < 0) ||
@@ -37,10 +36,10 @@ void Tracker::track(cv::Mat imgL_t0, cv::Mat imgR_t0, cv::Mat imgL_t1, cv::Mat i
             (status_0.at(i) == 0) || (point_0.x < 0) || (point_0.y < 0))
         {
             // erase bad matches
-            ptsL_t0.erase (ptsL_t0.begin() + (i - deletion_correction));
-            ptsR_t0.erase (ptsR_t0.begin() + (i - deletion_correction));
-            ptsL_t1.erase (ptsL_t1.begin() + (i - deletion_correction));
-            ptsR_t1.erase (ptsR_t1.begin() + (i - deletion_correction));
+            frame_t0->points_left_.erase (frame_t0->points_left_.begin() + (i - deletion_correction));
+            frame_t0->points_right_.erase (frame_t0->points_right_.begin() + (i - deletion_correction));
+            frame_t1->points_left_.erase (frame_t1->points_left_.begin() + (i - deletion_correction));
+            frame_t1->points_right_.erase (frame_t1->points_right_.begin() + (i - deletion_correction));
             ptsL_t0_return.erase (ptsL_t0_return.begin() + (i - deletion_correction));
 
             deletion_correction++;

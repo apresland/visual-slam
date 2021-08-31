@@ -2,13 +2,11 @@
 #define VISUAL_SLAM_TRACKER_H
 
 #include <opencv2/opencv.hpp>
+#include "frame.h"
 
 class Tracker {
 public:
-    void track(cv::Mat imgL_t0, cv::Mat imgR_t0, cv::Mat imgL_t1, cv::Mat imgR_t1,
-               std::vector<cv::Point2f> &ptsL_t0, std::vector<cv::Point2f> &ptsR_t0,
-               std::vector<cv::Point2f> &ptsL_t1, std::vector<cv::Point2f> &ptsR_t1,
-               std::vector<cv::Point2f> &ptsL_t0_return);
+    void track(std::shared_ptr<Frame> frame_t0, std::shared_ptr<Frame> frame_t1);
 };
 
 #endif //VISUAL_SLAM_TRACKER_H

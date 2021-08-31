@@ -4,6 +4,7 @@
 #include <memory>
 #include "sophus/se3.hpp"
 #include "camera.h"
+#include "frame.h"
 #include "detector.h"
 #include "tracker.h"
 #include "viewer.h"
@@ -17,7 +18,7 @@ public:
     enum Status {INITIALIZING, LOST, TRACKING};
 public:
     Frontend();
-    void update(const cv::Mat &image_left, const cv::Mat &image_right);
+    void update(std::shared_ptr<Frame> frame);
     void set_viewer(std::shared_ptr<Viewer> viewer) { viewer_ = viewer; }
     void set_cameras(std::shared_ptr<Camera> camera_left, std::shared_ptr<Camera> camera_right) {
         camera_left_ = camera_left;
@@ -25,9 +26,8 @@ public:
     }
 
 private:
-    int initialize(const cv::Mat &image_left_t1);
-    int process(const cv::Mat &image_left_t0, const cv::Mat &image_right_t0,
-                const cv::Mat &image_left_t1, const cv::Mat &image_right_t1);
+    int initialize(std::shared_ptr<Frame> frame_t1);
+    int process(std::shared_ptr<Frame> frame_t0, std::shared_ptr<Frame> frame_t1);
     int restart();
 
     int estimate_pose_3d2d_ransac(const std::vector<cv::Point2f>&  image_points_2d,
@@ -41,13 +41,12 @@ private:
     std::shared_ptr<Camera> camera_right_{nullptr};
     std::shared_ptr<Viewer> viewer_ = nullptr;
 
-    cv::Mat image_left_t0;
-    cv::Mat image_right_t0;
-    std::vector<cv::Point2f> features_;
+    Sophus::SE3d T_c_w_ = Sophus::SE3d();
 
-    Sophus::SE3d T_c_w_ = Sophus::SE3d(); // T_camera_world
-
+    std::shared_ptr<Frame> frame_t0_{nullptr};
+    std::shared_ptr<Frame> frame_t1_{nullptr};
     size_t frame_id_;
+
     Status status_{INITIALIZING};
 };
 
