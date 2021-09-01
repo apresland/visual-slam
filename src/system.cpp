@@ -35,10 +35,13 @@ void System::Run() {
 
     std::shared_ptr<Frontend> frontend = std::make_shared<Frontend>();
     std::shared_ptr<Viewer> viewer = std::make_shared<Viewer>();
+    std::shared_ptr<Map> map = std::make_shared<Map>();
     frontend->set_cameras(cameras_[0], cameras_[1]);
+    frontend->set_map(map);
     frontend->set_viewer(viewer);
     viewer->init();
 
+    int index = 0;
     std::shared_ptr<Sequence::StereoPair> prev_element = nullptr;
     for (std::shared_ptr<Sequence::StereoPair> element : sequence_->elements_)
     {
@@ -61,8 +64,11 @@ void System::Run() {
                    cv::INTER_NEAREST);
 
         std::shared_ptr<Frame> next_frame = std::make_shared<Frame>();
+        next_frame->id_ = index;
         next_frame->image_left_ = image_left_resized;
         next_frame->image_right_ = image_right_resized;
         frontend->update(next_frame);
+
+        ++index;
     }
 }

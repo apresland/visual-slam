@@ -26,7 +26,16 @@ include_directories(${g2o_INCLUDE_DIRS})
 
 include_directories("include")
 
-add_executable(stereo src/slam.cpp src/system.cpp src/frontend.cpp src/sequence.cpp src/camera.cpp src/detector.cpp src/tracker.cpp src/viewer.cpp)
+add_executable(stereo
+        src/slam.cpp
+        src/system.cpp
+        src/frontend.cpp
+        src/map.cpp
+        src/sequence.cpp
+        src/camera.cpp
+        src/detector.cpp
+        src/tracker.cpp
+        src/viewer.cpp)
 target_link_libraries(stereo
         ${OpenCV_LIBS}
         ${Sophus_LIBRARIES}

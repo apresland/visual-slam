@@ -1,7 +1,9 @@
 #include <algorithm>
 #include <opencv2/opencv.hpp>
 #include <sophus/se3.hpp>
-#include <sophus/so3.hpp>
+#include "observation.h"
+#include "feature.h"
+#include "landmark.h"
 #include "frontend.h"
 
 Frontend::Frontend() {}
@@ -26,10 +28,10 @@ void Frontend::update(std::shared_ptr<Frame> frame) {;
     ++frame_id_;
 }
 
-int Frontend::initialize(std::shared_ptr<Frame> frame_t1) {
+int Frontend::initialize(std::shared_ptr<Frame> frame) {
     frame_id_ = 0;
     viewer_->load_poses();
-    detector_.detect(frame_t1->image_left_, frame_t1->points_left_);
+    detector_.detect(frame->image_left_, frame->points_left_);
     status_ = TRACKING;
 }
 
@@ -41,25 +43,30 @@ int Frontend::process(std::shared_ptr<Frame> frame_t0, std::shared_ptr<Frame> fr
     if (frame_t0->points_left_.size() < MIN_FEATURE_COUNT) {
         detector_.detect(frame_t0->image_left_, frame_t0->points_left_);
     }
+    std::cout << "Detected points"<< frame_t0->points_left_.size() << std::endl;
 
     // -----------------------------------------------------------------------------------------------------------------
-    // Track Features : Lucas-Kanade tracking with circular matching.
+    // Trackable features : Select features seen at t0 and t1 with Lucas-Kanade tracking and circular matching.
     // -----------------------------------------------------------------------------------------------------------------
     tracker_.track(frame_t0, frame_t1);
 
     // -----------------------------------------------------------------------------------------------------------------
-    // Triangulate 3D Points :
+    // Triangulate features : Get 3D positions of tracked features at t0 w.r.t. camera
     // -----------------------------------------------------------------------------------------------------------------
-    cv::Mat proj_matrix_left = camera_left_->P();
-    cv::Mat proj_matrix_right = camera_right_->P();
-    cv::Mat points3D_t0, points4D_t0;
-    cv::triangulatePoints( proj_matrix_left,  proj_matrix_right,  frame_t0->points_left_,  frame_t0->points_right_,  points4D_t0);
-    cv::convertPointsFromHomogeneous(points4D_t0.t(), points3D_t0);
+    triangulate(frame_t0);
 
     // -----------------------------------------------------------------------------------------------------------------
-    // Estimate Pose :
+    // Estimate Pose : Camera pose in world coordinates at time t1 by reprojecting features from t0
     // -----------------------------------------------------------------------------------------------------------------
-    estimate_pose_3d2d_ransac(frame_t1->points_left_, points3D_t0, camera_left_->K(), T_c_w_);
+    estimate_pose(frame_t0, frame_t1, camera_left_->K(), T_c_w_);
+
+    // -----------------------------------------------------------------------------------------------------------------
+    //
+    // -----------------------------------------------------------------------------------------------------------------
+    if(frame_t0->points_left_.size() < MIN_FEATURE_COUNT) {
+        insert_keyframe(frame_t1);;
+    }
+
 
     // -----------------------------------------------------------------------------------------------------------------
     // Visualize Results :
@@ -77,11 +84,14 @@ int Frontend::restart() {
 // Use the Perspective-n-Point (PnP) algorithm to provide "perspective-from-3-points" (P3P). Estimates
 // the camera pose (t,r) that minimizes the reprojection error of 3D points onto the 2D image. Convert the
 // rotation vector (r) into a rotation matrix (R) with Rodrigues algorithm.
-int Frontend::estimate_pose_3d2d_ransac(const std::vector<cv::Point2f>&  image_points_2d,
-                                        const cv::Mat& object_points_3d,
-                                        const cv::Mat K,
-                                        Sophus::SE3d &T_c_w)
+int Frontend::estimate_pose(std::shared_ptr<Frame> frame_t0,
+                            std::shared_ptr<Frame> frame_t1,
+                            const cv::Mat K,
+                            Sophus::SE3d &T_c_w)
 {
+    std::vector<cv::Point3f>& object_points_3d = frame_t0->points_3d_;
+    std::vector<cv::Point2f>&  image_points_2d = frame_t1_->points_left_;
+
     cv::Mat inliers;
     cv::Mat coeffs = cv::Mat::zeros(4, 1, CV_64FC1);
     cv::Mat t = cv::Mat::zeros(3, 1, CV_64F);
@@ -101,14 +111,49 @@ int Frontend::estimate_pose_3d2d_ransac(const std::vector<cv::Point2f>&  image_p
     Sophus::SE3d T = Sophus::SE3d(SO3_R, SO3_t);
 
     // Scale of motion check
-    double motion_scale = sqrt(T.translation().x() * T.translation().x()
+    double translation_scale = sqrt(T.translation().x() * T.translation().x()
                         + T.translation().y() * T.translation().y()
                         + T.translation().z() * T.translation().z());
-    if (motion_scale > 0.05 && motion_scale < 10) {
+    if (translation_scale > 0.05 && translation_scale < 10) {
         T_c_w = T_c_w * T.inverse();
     } else {
-        std::cout << "[WARNING] Pose not updated due to out-of-bounds scale value" << motion_scale << std::endl;
+        std::cout << "[WARNING] Pose not updated due to out-of-bounds scale value" << translation_scale << std::endl;
     }
 
+    frame_t1->SetPose(T_c_w);
+
     return inliers.rows;
+}
+
+void Frontend::triangulate(std::shared_ptr<Frame> frame_t0) {
+    cv::Mat proj_matrix_left = camera_left_->P();
+    cv::Mat proj_matrix_right = camera_right_->P();
+    cv::Mat points3D, points4D;
+    cv::triangulatePoints( proj_matrix_left,  proj_matrix_right,  frame_t0->points_left_,  frame_t0->points_right_,  points4D);
+    cv::convertPointsFromHomogeneous(points4D.t(), points3D);
+    for(int i=0; i< points3D.rows; ++i) {
+        cv::Point3f p = *points3D.ptr<cv::Point3f>(i);
+        frame_t0->points_3d_.push_back(p);
+        Eigen::Matrix<double, 3, 1> pworld(p.x, p.y, p.z);
+        pworld = T_c_w_ * pworld;
+        std::shared_ptr<Landmark> landmark = std::make_shared<Landmark>();
+        std::shared_ptr<Feature> feature_left = std::make_shared<Feature>(frame_t0->points_left_[i]);
+        std::shared_ptr<Feature> feature_right = std::make_shared<Feature>(frame_t0->points_right_[i]);
+        landmark->set_position(pworld);
+        landmark->add_observation(feature_left);
+        landmark->add_observation(feature_right);
+        feature_left->landmark_ = landmark;
+        feature_right->landmark_ = landmark;
+        map_->insert_landmark(landmark);
+    }
+}
+
+void Frontend::insert_keyframe(std::shared_ptr<Frame> frame_t1) {
+
+    for (auto &feature : frame_t1->features_left_) {
+        auto landmark = feature->landmark_.lock();
+        if (landmark) landmark->add_observation(feature);
+    }
+
+    map_->insert_keyframe(frame_t1);
 }

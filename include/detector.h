@@ -2,6 +2,7 @@
 #define VISUAL_SLAM_DETECTOR_H
 
 #include <opencv2/opencv.hpp>
+#include "feature.h"
 
 constexpr unsigned int NUMBER_GRID_CELL_ROWS = 8;
 constexpr unsigned int NUMBER_GRID_CELL_COLS = 16;

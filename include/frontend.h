@@ -7,6 +7,7 @@
 #include "frame.h"
 #include "detector.h"
 #include "tracker.h"
+#include "map.h"
 #include "viewer.h"
 
 constexpr unsigned int MIN_FEATURE_COUNT = 1000;
@@ -19,6 +20,7 @@ public:
 public:
     Frontend();
     void update(std::shared_ptr<Frame> frame);
+    void set_map(std::shared_ptr<Map> map) { map_ = map; }
     void set_viewer(std::shared_ptr<Viewer> viewer) { viewer_ = viewer; }
     void set_cameras(std::shared_ptr<Camera> camera_left, std::shared_ptr<Camera> camera_right) {
         camera_left_ = camera_left;
@@ -30,17 +32,19 @@ private:
     int process(std::shared_ptr<Frame> frame_t0, std::shared_ptr<Frame> frame_t1);
     int restart();
 
-    int estimate_pose_3d2d_ransac(const std::vector<cv::Point2f>&  image_points_2d,
-                                  const cv::Mat& object_points_3d,
-                                  const cv::Mat K,
-                                  Sophus::SE3d &T_c_w);
+    int estimate_pose(std::shared_ptr<Frame> frame_t0,
+                      std::shared_ptr<Frame> frame_t1,
+                      const cv::Mat K,
+                      Sophus::SE3d &T_c_w);
+    void triangulate(std::shared_ptr<Frame> frame_t0);
+    void insert_keyframe(std::shared_ptr<Frame> frame_t1);
 
     Detector detector_;
     Tracker tracker_;
+    std::shared_ptr<Map> map_ {nullptr};
+    std::shared_ptr<Viewer> viewer_{nullptr};
     std::shared_ptr<Camera> camera_left_{nullptr};
     std::shared_ptr<Camera> camera_right_{nullptr};
-    std::shared_ptr<Viewer> viewer_ = nullptr;
-
     Sophus::SE3d T_c_w_ = Sophus::SE3d();
 
     std::shared_ptr<Frame> frame_t0_{nullptr};
