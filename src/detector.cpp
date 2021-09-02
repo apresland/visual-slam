@@ -9,24 +9,23 @@ static const auto keypoint_response_comparitor = [](cv::KeyPoint const& kp1, cv:
     return abs(kp1.response) > abs(kp2.response);
 };
 
-bool Detector::detect(const cv::Mat &image, std::vector<cv::Point2f> &features) {
-
-    int x, y;
+bool Detector::detect(std::shared_ptr<Frame> frame) {
 
     // FAST keypoint detection and presort on quality
     std::vector<cv::KeyPoint> keypoints;
-    detector_->detect(image, keypoints);
+    detector_->detect(frame->image_left_, keypoints);
     std::sort(keypoints.begin(), keypoints.end(), keypoint_response_comparitor);
 
     // Bucket with MAX_FEATURES_PER_CELL on presorted detections
+    int x, y;
     std::vector<cv::KeyPoint> keypoint_subset;
     unsigned int keypoint_cell_count[NUMBER_GRID_CELL_COLS][NUMBER_GRID_CELL_ROWS];
     for (auto &keypoint : keypoints) {
-        if(position_in_grid(image, keypoint.pt, x, y))
+        if(position_in_grid(frame->image_left_, keypoint.pt, x, y))
             if (MAX_FEATURES_PER_CELL > keypoint_cell_count[x][y])
                 ++keypoint_cell_count[x][y];
                 keypoint_subset.push_back(keypoint);
-                features.push_back(keypoint.pt);
+                frame->features_left_.push_back(std::make_shared<Feature>(keypoint.pt));
     }
 }
 

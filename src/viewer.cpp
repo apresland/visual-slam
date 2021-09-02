@@ -1,5 +1,6 @@
 #include <opencv2/opencv.hpp>
 #include "viewer.h"
+#include "feature.h"
 
 const std::string FEATURES_WINDOW_NAME = "Features";
 const std::string BUCKETED_FEATURES_WINDOW_NAME = "Bucketed Fetures";
@@ -14,7 +15,13 @@ void Viewer::init() {
     //cv::namedWindow(DISPARITY_WINDOW_NAME);
 }
 
-void Viewer::display_features(const cv::Mat &image, const std::vector<cv::Point2f> points_left_t1) {
+void Viewer::display_features(const std::shared_ptr<Frame> frame) {
+
+    const cv::Mat &image = frame->image_left_;
+    std::vector<cv::Point2f> points_left_t1;
+    for(auto &f : frame->features_left_) {
+        points_left_t1.push_back(f->point_2d_);
+    }
 
     cv::Scalar color_g(0, 255, 0), color_b(255, 0, 0), color_r(0, 0, 255);
 
@@ -37,7 +44,19 @@ void Viewer::display_features(const cv::Mat &image, const std::vector<cv::Point2
     cv::waitKey(1);
 }
 
-void Viewer::display_tracking(const cv::Mat &image_left_t1, std::vector<cv::Point2f> points_left_t0, std::vector<cv::Point2f> points_left_t1) {
+void Viewer::display_tracking(const std::shared_ptr<Frame> frame_t0, const std::shared_ptr<Frame> frame_t1) {
+
+    const cv::Mat &image_left_t1 = frame_t0->image_left_;
+    std::vector<cv::Point2f> points_left_t0;
+    for(auto f : frame_t0->features_left_) {
+        points_left_t0.push_back(f->point_2d_);
+    }
+    std::vector<cv::Point2f> points_left_t1;
+    for(auto f : frame_t1->features_left_) {
+        points_left_t1.push_back(f->point_2d_);
+    }
+
+
     int radius = 2;
     cv::Mat vis;
     cv::cvtColor(image_left_t1, vis, cv::COLOR_GRAY2BGR, 3);

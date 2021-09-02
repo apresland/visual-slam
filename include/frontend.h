@@ -32,12 +32,12 @@ private:
     int process(std::shared_ptr<Frame> frame_t0, std::shared_ptr<Frame> frame_t1);
     int restart();
 
-    int estimate_pose(std::shared_ptr<Frame> frame_t0,
+    bool estimate_pose(std::shared_ptr<Frame> frame_t0,
                       std::shared_ptr<Frame> frame_t1,
-                      const cv::Mat K,
-                      Sophus::SE3d &T_c_w);
+                      const cv::Mat K);
     void triangulate(std::shared_ptr<Frame> frame_t0);
     void insert_keyframe(std::shared_ptr<Frame> frame_t1);
+    void remove_outliers(std::shared_ptr<Frame> frame, cv::Mat inliers);
 
     Detector detector_;
     Tracker tracker_;
