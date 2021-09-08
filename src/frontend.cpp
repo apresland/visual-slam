@@ -97,8 +97,8 @@ void Frontend::estimate_pose(std::shared_ptr<Frame> frame_t0,
     SO3_t << t.at<double>(0, 0), t.at<double>(1, 0), t.at<double>(2, 0);
     Sophus::SE3d T = Sophus::SE3d(SO3_R, SO3_t);
 
-    remove_outliers(frame_t0, inliers);
-    remove_outliers(frame_t1, inliers);
+    //remove_outliers(frame_t0, inliers);
+    //remove_outliers(frame_t1, inliers);
 
     double distance = cv::norm(t);
     double angle = cv::norm(R);
@@ -140,14 +140,41 @@ void Frontend::insert_keyframe(std::shared_ptr<Frame> frame) {
         return;
     }
 
+    // Repeat observation of existing landmark
     for (int i = 0; i < frame->features_left_.size(); ++i) {
-        std::shared_ptr<Landmark> landmark = std::make_shared<Landmark>();
-        landmark->set_position(frame->points_3d_[i]);
-        landmark->add_observation(frame->features_left_[i]);
-        landmark->add_observation(frame->features_right_[i]);
-        frame->features_left_[i]->landmark_ = landmark;
-        frame->features_right_[i]->landmark_ = landmark;
-        map_->insert_landmark(landmark);
+        int frame_id = frame->id_;
+        int feature_id = frame->features_left_.at(i)->id_;
+        unsigned long landmark_id = frame->features_left_.at(i)->landmark_id_;
+        Observation observation(frame_id, feature_id);
+        //map_->landmarks_.at(landmark_id).add_observation(observation);
+    }
+
+    // Initial observation of novel landmark
+    int feature_id = frame->features_left_.size();
+    for (int i = 0; i<frame->keypoints_left_.size(); i++) {
+
+        bool is_existing_feature = false;
+        for (auto &feature: frame->features_left_) {
+            is_existing_feature = ( feature->point_2d_.x == frame->keypoints_left_.at(i).pt.x
+                                    && feature->point_2d_.y == frame->keypoints_left_.at(i).pt.y);
+            if (is_existing_feature) {
+                map_->landmarks_.at(feature->landmark_id_).point_3d_ = feature->point_3d_;
+                // ToDo: Break this loop
+            }
+        }
+        if ( ! is_existing_feature) {
+            Feature feature(frame->keypoints_left_.at(i).pt);
+            feature.id_ = feature_id;
+            feature.frame_id_ = frame->id_;
+            feature.landmark_id_ = landmark_id_;
+            //frame_current_.features_.push_back(feature_to_add);
+            Observation observation(frame->id_, feature.id_);
+            Landmark landmark(landmark_id_, frame->points_3d_.at(i));
+            map_->insert_landmark(landmark);
+            landmark_id_++;
+            feature_id++;
+        }
+
     }
 
     map_->insert_keyframe(frame);

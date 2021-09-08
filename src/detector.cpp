@@ -25,6 +25,7 @@ bool Detector::detect(std::shared_ptr<Frame> frame) {
             if (MAX_FEATURES_PER_CELL > keypoint_cell_count[x][y]) {
                 ++keypoint_cell_count[x][y];
                 keypoint_subset.push_back(keypoint);
+                frame->keypoints_left_.push_back(keypoint);
                 frame->features_left_.push_back(std::make_shared<Feature>(keypoint.pt));
             }
     }

@@ -2,7 +2,7 @@
 #define VISUAL_SLAM_MAP_H
 #include <mutex>
 #include <memory>
-#include <map>
+#include <unordered_map>
 #include "landmark.h"
 #include "frame.h"
 
@@ -11,15 +11,16 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
     Map(){}
 
+    typedef std::unordered_map<unsigned long, Landmark> LandmarkMapType;
+
     void insert_keyframe(std::shared_ptr<Frame> keyframe);
-    void insert_landmark(std::shared_ptr<Landmark> landmark);
+    void insert_landmark(Landmark landmark);
 
     std::unordered_map<unsigned long, std::shared_ptr<Frame>> keyframes();
-    std::unordered_map<unsigned long, std::shared_ptr<Landmark>> landmarks();
+    LandmarkMapType landmarks();
 
-    std::mutex data_mutex_;
-    std::unordered_map<unsigned long, std::shared_ptr<Landmark>> landmarks_;
-    std::unordered_map<unsigned long, std::shared_ptr<Landmark>> active_landmarks_;
+    LandmarkMapType landmarks_;
+    LandmarkMapType active_landmarks_;
     std::unordered_map<unsigned long, std::shared_ptr<Frame>> keyframes_;
     std::unordered_map<unsigned long, std::shared_ptr<Frame>> active_keyframes_;
     std::shared_ptr<Frame> current_frame_ {nullptr};

@@ -11,26 +11,26 @@
 struct Landmark {
 
 public:
-    Landmark() {};
-    Landmark(long id, cv::Point3f position)
-        : id_(id), position_(position) {};
+    Landmark(){}
+    Landmark(long id, cv::Point3f point_3d)
+        : id_(id), point_3d_(point_3d) {}
 
-    void set_position(cv::Point3f position) {
-        std::unique_lock<std::mutex> lck(mutex_);
-        position_ = position;
-    };
+    void set_position(cv::Point3f point_3d) {
+        //std::unique_lock<std::mutex> lck(mutex_);
+        point_3d_ = point_3d;
+    }
 
-    void add_observation(std::shared_ptr<Feature> feature) {
-        std::unique_lock<std::mutex> lck(mutex_);
-        observations_.push_back(feature);
+    void add_observation(Observation observation) {
+        //std::unique_lock<std::mutex> lck(mutex_);
+        observations_.push_back(observation);
         observed_times_++;
     }
 
 public:
-    long id_;
-    cv::Point3f position_;
-    std::mutex mutex_;
-    std::vector<std::weak_ptr<Feature>> observations_;
+    unsigned long id_;
+    cv::Point3f point_3d_;
+    //std::mutex mutex_;
+    std::vector<Observation> observations_;
     int observed_times_ {0};
 };
 

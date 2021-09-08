@@ -50,7 +50,7 @@ private:
     std::shared_ptr<Camera> camera_right_{nullptr};
     std::shared_ptr<Frame> frame_previous_{nullptr};
     std::shared_ptr<Frame> frame_current_{nullptr};
-    size_t landmark_id_;
+    size_t landmark_id_{0};
     size_t frame_id_{0};
 
     Status status_{INITIALIZING};

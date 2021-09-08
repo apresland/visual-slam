@@ -1,3 +1,4 @@
+#include <utility>
 #include "map.h"
 
 void Map::insert_keyframe(std::shared_ptr<Frame> keyframe) {
@@ -9,28 +10,22 @@ void Map::insert_keyframe(std::shared_ptr<Frame> keyframe) {
         keyframes_[keyframe->id_] = keyframe;
         active_keyframes_[keyframe->id_] = keyframe;
     }
-
-    //if (active_keyframes_.size() > num_active_keyframes_) {
-        //RemoveOldKeyframe();
-    //}
 }
-void Map::insert_landmark(std::shared_ptr<Landmark> landmark) {
-    if (landmarks_.find(landmark->id_) == landmarks_.end()) {
-        landmarks_.insert(make_pair(landmark->id_, landmark));
-        active_landmarks_.insert(std::make_pair(landmark->id_, landmark));
+void Map::insert_landmark(Landmark landmark) {
+    if (landmarks_.find(landmark.id_) == landmarks_.end()) {
+        landmarks_.insert( LandmarkMapType::value_type(landmark.id_, landmark));
+        active_landmarks_.insert(LandmarkMapType::value_type(landmark.id_, landmark));
     } else {
-        landmarks_[landmark->id_] = landmark;
-        active_landmarks_[landmark->id_] = landmark;
+        landmarks_.at(landmark.id_) = landmark;
+        active_landmarks_.at(landmark.id_) = landmark;
     }
 }
 
 std::unordered_map<unsigned long, std::shared_ptr<Frame>> Map::keyframes() {
-    std::unique_lock<std::mutex> lck(data_mutex_);
     return keyframes_;
 }
 
-std::unordered_map<unsigned long, std::shared_ptr<Landmark>> Map::landmarks() {
-    std::unique_lock<std::mutex> lck(data_mutex_);
+Map::LandmarkMapType Map::landmarks() {
     return landmarks_;
 }
 
