@@ -48,7 +48,10 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
   libtbb2 \
   libtbb-dev \
   libdc1394-22-dev \
-  libpcl-dev
+  libpcl-dev \
+  libgoogle-glog-dev \
+  libgflags-dev \
+  libsuitesparse-dev
 
 # Permit root user to login by ssh
 RUN mkdir /var/run/sshd
@@ -105,11 +108,20 @@ RUN cmake -DUSE_BASIC_LOGGING=ON ..
 RUN make
 RUN make install
 
+# install ceres
+WORKDIR /home/dev/
+RUN wget http://ceres-solver.org/ceres-solver-2.0.0.tar.gz
+RUN tar zxf ceres-solver-2.0.0.tar.gz
+WORKDIR /home/dev/ceres-solver-2.0.0/build
+RUN cmake ..
+RUN make
+RUN make install
+
 # install g2o
 WORKDIR /home/dev/
 RUN git clone https://github.com/RainerKuemmerle/g2o
 WORKDIR /home/dev/g2o/build
-RUN cmake ..
+RUN cmake -std=c++14 ..
 RUN make
 RUN make install
 

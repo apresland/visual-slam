@@ -10,9 +10,11 @@ struct Feature {
 public:
     Feature(cv::Point2f point_2d) : point_2d_(point_2d) {}
 public:
+    int landmark_id_{-1};
     cv::Point2f point_2d_;
-    std::weak_ptr<Frame> frame_;
-    std::weak_ptr<Landmark> landmark_;
+    cv::Point3f point_3d_;
+    std::shared_ptr<Frame> frame_;
+    std::shared_ptr<Landmark> landmark_;
     bool is_inlier_{false};
 };
 

@@ -9,6 +9,7 @@
 #include "frame.h"
 #include "viewer.h"
 #include "frontend.h"
+#include "backend.h"
 
 System::System(std::string path_to_sequence)
     : path_root_(path_to_sequence)
@@ -33,12 +34,18 @@ bool System::Init() {
 
 void System::Run() {
 
-    std::shared_ptr<Frontend> frontend = std::make_shared<Frontend>();
     std::shared_ptr<Viewer> viewer = std::make_shared<Viewer>();
     std::shared_ptr<Map> map = std::make_shared<Map>();
+
+    std::shared_ptr<Backend> backend = std::make_shared<Backend>();
+    backend->set_cameras(cameras_[0], cameras_[1]);
+    backend->set_map(map);
+
+    std::shared_ptr<Frontend> frontend = std::make_shared<Frontend>();
     frontend->set_cameras(cameras_[0], cameras_[1]);
     frontend->set_map(map);
     frontend->set_viewer(viewer);
+    frontend->set_backend(backend);
     viewer->init();
 
     int index = 0;
@@ -71,4 +78,6 @@ void System::Run() {
 
         ++index;
     }
+
+    backend->terminate();
 }

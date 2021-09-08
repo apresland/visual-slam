@@ -12,10 +12,10 @@ struct Landmark {
 
 public:
     Landmark() {};
-    Landmark(Eigen::Matrix<double, 3, 1> position)
-        : position_(position) {};
+    Landmark(long id, cv::Point3f position)
+        : id_(id), position_(position) {};
 
-    void set_position(Eigen::Matrix<double, 3, 1> position) {
+    void set_position(cv::Point3f position) {
         std::unique_lock<std::mutex> lck(mutex_);
         position_ = position;
     };
@@ -27,8 +27,8 @@ public:
     }
 
 public:
-    int id_;
-    Eigen::Matrix<double, 3, 1> position_;
+    long id_;
+    cv::Point3f position_;
     std::mutex mutex_;
     std::vector<std::weak_ptr<Feature>> observations_;
     int observed_times_ {0};

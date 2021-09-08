@@ -59,8 +59,6 @@ public:
     int id_;
     cv::Mat image_left_;
     cv::Mat image_right_;
-    //std::vector<cv::Point2f> points_left_;
-    //std::vector<cv::Point2f> points_right_;
     std::vector<cv::Point3f> points_3d_;
     std::vector<std::shared_ptr<Feature>> features_left_;
     std::vector<std::shared_ptr<Feature>> features_right_;

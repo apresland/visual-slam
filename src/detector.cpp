@@ -22,10 +22,11 @@ bool Detector::detect(std::shared_ptr<Frame> frame) {
     unsigned int keypoint_cell_count[NUMBER_GRID_CELL_COLS][NUMBER_GRID_CELL_ROWS];
     for (auto &keypoint : keypoints) {
         if(position_in_grid(frame->image_left_, keypoint.pt, x, y))
-            if (MAX_FEATURES_PER_CELL > keypoint_cell_count[x][y])
+            if (MAX_FEATURES_PER_CELL > keypoint_cell_count[x][y]) {
                 ++keypoint_cell_count[x][y];
                 keypoint_subset.push_back(keypoint);
                 frame->features_left_.push_back(std::make_shared<Feature>(keypoint.pt));
+            }
     }
 }
 

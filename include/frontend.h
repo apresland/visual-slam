@@ -7,10 +7,11 @@
 #include "frame.h"
 #include "detector.h"
 #include "tracker.h"
+#include "backend.h"
 #include "map.h"
 #include "viewer.h"
 
-constexpr unsigned int MIN_FEATURE_COUNT = 1000;
+constexpr unsigned int MIN_FEATURE_COUNT = 500;
 constexpr float IMAGE_SCALE_FACTOR = 1.0;
 
 class Frontend {
@@ -21,6 +22,7 @@ public:
     Frontend();
     void update(std::shared_ptr<Frame> frame);
     void set_map(std::shared_ptr<Map> map) { map_ = map; }
+    void set_backend(std::shared_ptr<Backend> backend) { backend_ = backend; }
     void set_viewer(std::shared_ptr<Viewer> viewer) { viewer_ = viewer; }
     void set_cameras(std::shared_ptr<Camera> camera_left, std::shared_ptr<Camera> camera_right) {
         camera_left_ = camera_left;
@@ -28,11 +30,11 @@ public:
     }
 
 private:
-    int initialize(std::shared_ptr<Frame> frame_t1);
+    int initialize(std::shared_ptr<Frame> frame);
     int process(std::shared_ptr<Frame> frame_t0, std::shared_ptr<Frame> frame_t1);
     int restart();
 
-    bool estimate_pose(std::shared_ptr<Frame> frame_t0,
+    void estimate_pose(std::shared_ptr<Frame> frame_t0,
                       std::shared_ptr<Frame> frame_t1,
                       const cv::Mat K);
     void triangulate(std::shared_ptr<Frame> frame_t0);
@@ -42,14 +44,14 @@ private:
     Detector detector_;
     Tracker tracker_;
     std::shared_ptr<Map> map_ {nullptr};
+    std::shared_ptr<Backend> backend_ {nullptr};
     std::shared_ptr<Viewer> viewer_{nullptr};
     std::shared_ptr<Camera> camera_left_{nullptr};
     std::shared_ptr<Camera> camera_right_{nullptr};
-    Sophus::SE3d T_c_w_ = Sophus::SE3d();
-
-    std::shared_ptr<Frame> frame_t0_{nullptr};
-    std::shared_ptr<Frame> frame_t1_{nullptr};
-    size_t frame_id_;
+    std::shared_ptr<Frame> frame_previous_{nullptr};
+    std::shared_ptr<Frame> frame_current_{nullptr};
+    size_t landmark_id_;
+    size_t frame_id_{0};
 
     Status status_{INITIALIZING};
 };
