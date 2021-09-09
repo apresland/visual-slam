@@ -97,8 +97,8 @@ void Frontend::estimate_pose(std::shared_ptr<Frame> frame_t0,
     SO3_t << t.at<double>(0, 0), t.at<double>(1, 0), t.at<double>(2, 0);
     Sophus::SE3d T = Sophus::SE3d(SO3_R, SO3_t);
 
-    //remove_outliers(frame_t0, inliers);
-    //remove_outliers(frame_t1, inliers);
+    remove_outliers(frame_t0, inliers);
+    remove_outliers(frame_t1, inliers);
 
     double distance = cv::norm(t);
     double angle = cv::norm(R);
