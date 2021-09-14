@@ -7,7 +7,7 @@
 #include <g2o/solvers/dense/linear_solver_dense.h>
 
 #include "frame.h"
-#include "landmark.h"
+#include "mappoint.h"
 
 class Optimization{
 
@@ -20,7 +20,7 @@ public:
     }
 
     void compute(std::unordered_map<unsigned long, std::shared_ptr<Frame>> keyframes,
-                 std::unordered_map<unsigned long, Landmark> landmarks,
+                 std::unordered_map<unsigned long, MapPoint> landmarks,
                  const cv::Mat &K);
 
 public:

@@ -13,6 +13,8 @@ bool Detector::detect(std::shared_ptr<Frame> frame_t0, std::shared_ptr<Frame> fr
 
     if(!frame_t0) return false;
 
+    std::cout << "[INFO] Detector::detect - creating new keypoints" << std::endl;
+
     NUMBER_GRID_CELL_COLS = std::ceil(static_cast<double>(frame_t0->image_left_.cols)/GRID_CELL_SIZE);
     NUMBER_GRID_CELL_ROWS = std::ceil(static_cast<double >(frame_t0->image_left_.rows)/GRID_CELL_SIZE);
     std::vector<bool> occupancy_grid(NUMBER_GRID_CELL_COLS*NUMBER_GRID_CELL_ROWS, false);

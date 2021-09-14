@@ -1,5 +1,5 @@
-#ifndef VISUAL_SLAM_LANDMARK_H
-#define VISUAL_SLAM_LANDMARK_H
+#ifndef VISUAL_SLAM_MAPPOINT_H
+#define VISUAL_SLAM_MAPPOINT_H
 
 #include <memory>
 #include <mutex>
@@ -8,11 +8,11 @@
 #include "feature.h"
 #include "observation.h"
 
-struct Landmark {
+struct MapPoint {
 
 public:
-    Landmark(){}
-    Landmark(long id, cv::Point3f point_3d)
+    MapPoint(){}
+    MapPoint(long id, cv::Point3f point_3d)
         : id_(id), point_3d_(point_3d) {}
 
     void set_position(cv::Point3f point_3d) {
@@ -34,4 +34,4 @@ public:
     int observed_times_ {0};
 };
 
-#endif //VISUAL_SLAM_LANDMARK_H
+#endif //VISUAL_SLAM_MAPPOINT_H

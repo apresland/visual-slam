@@ -3,7 +3,7 @@
 #include <mutex>
 #include <memory>
 #include <unordered_map>
-#include "landmark.h"
+#include "mappoint.h"
 #include "frame.h"
 
 class Map {
@@ -11,10 +11,10 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
     Map(){}
 
-    typedef std::unordered_map<unsigned long, Landmark> LandmarkMapType;
+    typedef std::unordered_map<unsigned long, MapPoint> LandmarkMapType;
 
     void insert_keyframe(std::shared_ptr<Frame> keyframe);
-    void insert_landmark(Landmark landmark);
+    void insert_landmark(MapPoint landmark);
 
     std::unordered_map<unsigned long, std::shared_ptr<Frame>> keyframes();
     LandmarkMapType landmarks();

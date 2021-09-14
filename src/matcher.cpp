@@ -1,9 +1,9 @@
 #include <vector>
 #include <memory>
-#include "tracker.h"
+#include "matcher.h"
 
-void Tracker::track(std::shared_ptr<Frame> frame) {
-    std::cout << "[INFO] Tracker::match_right - " << frame->features_left_.size() << " 2D points" << std::endl;
+void Matcher::match(std::shared_ptr<Frame> frame) {
+    std::cout << "[INFO] Matcher::match_right - " << frame->features_left_.size() << " 2D points" << std::endl;
 
     std::vector<cv::Point2f> frame_t0_points_left = frame->get_points_left();
     std::vector<cv::Point2f> frame_t0_points_right = frame->get_points_right();
@@ -45,9 +45,9 @@ void Tracker::track(std::shared_ptr<Frame> frame) {
     }
 }
 
-void Tracker::track(std::shared_ptr<Frame> frame_t0, std::shared_ptr<Frame> frame_t1) {
+void Matcher::match_circular(std::shared_ptr<Frame> frame_t0, std::shared_ptr<Frame> frame_t1) {
 
-    std::cout << "[INFO] Tracker::track - tracking " << frame_t0->features_left_.size() << " 2D points" << std::endl;
+    std::cout << "[INFO] Matcher::match_circular - matching " << frame_t0->features_left_.size() << " 2D points" << std::endl;
 
     std::vector<cv::Point2f> frame_t0_points_left = frame_t0->get_points_left();
     std::vector<cv::Point2f> frame_t0_points_right = frame_t0->get_points_right();
@@ -56,7 +56,6 @@ void Tracker::track(std::shared_ptr<Frame> frame_t0, std::shared_ptr<Frame> fram
     std::vector<cv::Point2f> frame_t1_points_left = frame_t1->get_points_left();
     std::vector<cv::Point2f> frame_t1_points_right = frame_t1->get_points_right();
     std::vector<cv::Point3f> frame_t1_points_3d = frame_t1->get_points_3d();
-
 
     std::vector<float> err;
     cv::Size window_size=cv::Size(21,21);
@@ -105,30 +104,46 @@ void Tracker::track(std::shared_ptr<Frame> frame_t0, std::shared_ptr<Frame> fram
     for ( int i =0; i < frame_t0_points_left.size(); i++ ) {
         cv::Point2f pt2d = frame_t0_points_left[i];
         cv::Point3f pt3d = frame_t0_points_3d[i];
-        frame_t0->features_left_.push_back(std::make_shared<Feature>(frame_t0, pt2d, pt3d));
+        std::shared_ptr<MapPoint> map_point = std::make_shared<MapPoint>();
+        map_point->point_3d_ = pt3d;
+        std::shared_ptr<Feature> feature = std::make_shared<Feature>(frame_t0, pt2d);
+        feature->landmark_ = map_point;
+        frame_t0->features_left_.push_back(feature);
     }
 
     frame_t0->features_right_.clear();
     for ( int i =0; i < frame_t0_points_right.size(); i++ ) {
         cv::Point2f pt2d = frame_t0_points_right[i];
         cv::Point3f pt3d = frame_t0_points_3d[i];
-        frame_t0->features_right_.push_back(std::make_shared<Feature>(frame_t0, pt2d, pt3d));
+        std::shared_ptr<MapPoint> map_point = std::make_shared<MapPoint>();
+        map_point->point_3d_ = pt3d;
+        std::shared_ptr<Feature> feature = std::make_shared<Feature>(frame_t0, pt2d);
+        feature->landmark_ = map_point;
+        frame_t0->features_right_.push_back(feature);
     }
 
     frame_t1->features_left_.clear();
     for ( int i =0; i < frame_t1_points_left.size(); i++ ) {
         cv::Point2f pt2d = frame_t1_points_left[i];
         cv::Point3f pt3d = frame_t0_points_3d[i];
-        frame_t1->features_left_.push_back(std::make_shared<Feature>(frame_t1, pt2d, pt3d));
+        std::shared_ptr<MapPoint> map_point = std::make_shared<MapPoint>();
+        map_point->point_3d_ = pt3d;
+        std::shared_ptr<Feature> feature = std::make_shared<Feature>(frame_t0, pt2d);
+        feature->landmark_ = map_point;
+        frame_t1->features_left_.push_back(feature);
     }
 
     frame_t1->features_right_.clear();
     for ( int i =0; i < frame_t1_points_right.size(); i++ ) {
         cv::Point2f pt2d = frame_t1_points_right[i];
         cv::Point3f pt3d = frame_t0_points_3d[i];
-        frame_t1->features_right_.push_back(std::make_shared<Feature>(frame_t1, pt2d, pt3d));
+        std::shared_ptr<MapPoint> map_point = std::make_shared<MapPoint>();
+        map_point->point_3d_ = pt3d;
+        std::shared_ptr<Feature> feature = std::make_shared<Feature>(frame_t0, pt2d);
+        feature->landmark_ = map_point;
+        frame_t1->features_right_.push_back(feature);
     }
 
-    std::cout << "[INFO] Tracker::track - tracked " << frame_t0->features_left_.size() << " 2D points" << std::endl;
+    std::cout << "[INFO] Matcher::match_circular - matched " << frame_t0->features_left_.size() << " 2D points" << std::endl;
 }
 

@@ -12,7 +12,7 @@ void Map::insert_keyframe(std::shared_ptr<Frame> keyframe) {
     }
 }
 
-void Map::insert_landmark(Landmark landmark) {
+void Map::insert_landmark(MapPoint landmark) {
     if (landmarks_.find(landmark.id_) == landmarks_.end()) {
         landmarks_.insert( LandmarkMapType::value_type(landmark.id_, landmark));
         active_landmarks_.insert(LandmarkMapType::value_type(landmark.id_, landmark));

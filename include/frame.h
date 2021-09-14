@@ -31,7 +31,7 @@ public:
     }
 
     std::vector<cv::Point3f> get_points_3d() {
-        return features2points3d(features_right_);
+        return features2points3d(features_left_);
     }
 
 private:
@@ -47,7 +47,8 @@ private:
     std::vector<cv::Point3f> features2points3d(std::vector<std::shared_ptr<Feature>> features) {
         std::vector<cv::Point3f> points;
         for (auto &feature : features) {
-            points.push_back(feature->point_3d_);
+            if(! feature->landmark_) {std::cout << "undefined landmark" << std::endl;}
+            points.push_back(feature->landmark_->point_3d_);
         }
         return points;
     }

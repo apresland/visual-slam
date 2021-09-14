@@ -6,7 +6,7 @@
 #include "camera.h"
 #include "frame.h"
 #include "detector.h"
-#include "tracker.h"
+#include "matcher.h"
 #include "backend.h"
 #include "map.h"
 #include "viewer.h"
@@ -43,7 +43,7 @@ private:
     void remove_outliers(std::shared_ptr<Frame> frame, cv::Mat inliers);
 
     Detector detector_;
-    Tracker tracker_;
+    Matcher matcher_;
     std::shared_ptr<Map> map_ {nullptr};
     std::shared_ptr<Backend> backend_ {nullptr};
     std::shared_ptr<Viewer> viewer_{nullptr};

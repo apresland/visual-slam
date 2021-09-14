@@ -10,14 +10,14 @@ void Backend::execute() {
         std::unique_lock<std::mutex> lock(data_mutex_);
         map_update_.wait(lock);
         std::unordered_map<unsigned long, std::shared_ptr<Frame>> active_keyframes = map_->active_keyframes_;
-        std::unordered_map<unsigned long, Landmark> active_landmarks = map_->active_landmarks_;
+        std::unordered_map<unsigned long, MapPoint> active_landmarks = map_->active_landmarks_;
         optimize(active_keyframes, active_landmarks);
     }
 
 }
 
 void Backend::optimize(std::unordered_map<unsigned long, std::shared_ptr<Frame>> keyframes,
-              std::unordered_map<unsigned long, Landmark> landmarks) {
+              std::unordered_map<unsigned long, MapPoint> landmarks) {
     optimization_.compute(keyframes, landmarks, camera_left_->K());
 }
 
