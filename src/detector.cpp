@@ -9,30 +9,43 @@ static const auto keypoint_response_comparitor = [](cv::KeyPoint const& kp1, cv:
     return abs(kp1.response) > abs(kp2.response);
 };
 
-bool Detector::detect(std::shared_ptr<Frame> frame) {
+bool Detector::detect(std::shared_ptr<Frame> frame_t0, std::shared_ptr<Frame> frame_previous) {
+
+    if(!frame_t0) return false;
+
+    NUMBER_GRID_CELL_COLS = std::ceil(static_cast<double>(frame_t0->image_left_.cols)/GRID_CELL_SIZE);
+    NUMBER_GRID_CELL_ROWS = std::ceil(static_cast<double >(frame_t0->image_left_.rows)/GRID_CELL_SIZE);
+    std::vector<bool> occupancy_grid(NUMBER_GRID_CELL_COLS*NUMBER_GRID_CELL_ROWS, false);
+
+    // occupancy grid initialize with existing features
+    if (frame_previous) {
+        std::vector<cv::Point2f> previous_keypoints = frame_previous->get_points_left();
+        for (int i =0; i < previous_keypoints.size(); i++)
+        {
+            int x = previous_keypoints[i].x;
+            int y = previous_keypoints[i].y;
+            int index = static_cast<int>(y/GRID_CELL_SIZE)*NUMBER_GRID_CELL_COLS + static_cast<int>(x/GRID_CELL_SIZE);
+            occupancy_grid.at(index) = true;
+        }
+    }
 
     // FAST keypoint detection and presort on quality
     std::vector<cv::KeyPoint> keypoints;
-    detector_->detect(frame->image_left_, keypoints);
+    detector_->detect(frame_t0->image_left_, keypoints);
+
+    // sort detections by quality of response
     std::sort(keypoints.begin(), keypoints.end(), keypoint_response_comparitor);
 
-    // Bucket with MAX_FEATURES_PER_CELL on presorted detections
-    int x, y;
-    std::vector<cv::KeyPoint> keypoint_subset;
-    unsigned int keypoint_cell_count[NUMBER_GRID_CELL_COLS][NUMBER_GRID_CELL_ROWS];
-    for (auto &keypoint : keypoints) {
-        if(position_in_grid(frame->image_left_, keypoint.pt, x, y))
-            if (MAX_FEATURES_PER_CELL > keypoint_cell_count[x][y]) {
-                ++keypoint_cell_count[x][y];
-                keypoint_subset.push_back(keypoint);
-                frame->keypoints_left_.push_back(keypoint);
-                frame->features_left_.push_back(std::make_shared<Feature>(keypoint.pt));
-            }
-    }
-}
+    // fill unoccupied cells with best detections
+    for (int i =0; i < keypoints.size(); i++)
+    {
+        int x = keypoints[i].pt.x;
+        int y = keypoints[i].pt.y;
+        int index = static_cast<int>(y/GRID_CELL_SIZE)*NUMBER_GRID_CELL_COLS + static_cast<int>(x/GRID_CELL_SIZE);
+        if ( ! occupancy_grid.at(index)) {
+            frame_t0->features_left_.push_back(std::make_shared<Feature>(frame_t0, keypoints[i].pt));
+            occupancy_grid.at(index) = true;
+        }
 
-bool Detector::position_in_grid(const cv::Mat &image, cv::Point2f &point, int &x, int &y) {
-    x = round((point.x) * static_cast<float>(NUMBER_GRID_CELL_COLS) / (image.cols));
-    y = round((point.y) * static_cast<float>(NUMBER_GRID_CELL_ROWS) / (image.rows));
-    return (x >=0 && x < NUMBER_GRID_CELL_COLS && y >= 0 && y < NUMBER_GRID_CELL_ROWS);
+    }
 }

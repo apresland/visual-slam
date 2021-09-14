@@ -6,17 +6,17 @@
 #include "frame.h"
 #include "feature.h"
 
-constexpr unsigned int NUMBER_GRID_CELL_ROWS = 8;
-constexpr unsigned int NUMBER_GRID_CELL_COLS = 16;
-constexpr unsigned int MAX_FEATURES_PER_CELL = 10;
+constexpr unsigned int GRID_CELL_SIZE = 15;
 
 class Detector {
 public:
     Detector();
-    bool detect(std::shared_ptr<Frame> frame);
+    bool detect(std::shared_ptr<Frame> frame_t0, std::shared_ptr<Frame> frame_previous);
 private:
     bool position_in_grid(const cv::Mat &image, cv::Point2f &point, int &grid_pos_x, int &grid_pos_y);
     cv::Ptr<cv::FeatureDetector> detector_;
+    int NUMBER_GRID_CELL_COLS;
+    int NUMBER_GRID_CELL_ROWS;
 };
 
 #endif //VISUAL_SLAM_DETECTOR_H

@@ -18,10 +18,7 @@ void Viewer::init() {
 void Viewer::display_features(const std::shared_ptr<Frame> frame) {
 
     const cv::Mat &image = frame->image_left_;
-    std::vector<cv::Point2f> points_left_t1;
-    for(auto &f : frame->features_left_) {
-        points_left_t1.push_back(f->point_2d_);
-    }
+    std::vector<cv::Point2f> points_left_t1 = frame->get_points_left();
 
     cv::Scalar color_g(0, 255, 0), color_b(255, 0, 0), color_r(0, 0, 255);
 
@@ -47,15 +44,8 @@ void Viewer::display_features(const std::shared_ptr<Frame> frame) {
 void Viewer::display_tracking(const std::shared_ptr<Frame> frame_t0, const std::shared_ptr<Frame> frame_t1) {
 
     const cv::Mat &image_left_t1 = frame_t0->image_left_;
-    std::vector<cv::Point2f> points_left_t0;
-    for(auto f : frame_t0->features_left_) {
-        points_left_t0.push_back(f->point_2d_);
-    }
-    std::vector<cv::Point2f> points_left_t1;
-    for(auto f : frame_t1->features_left_) {
-        points_left_t1.push_back(f->point_2d_);
-    }
-
+    std::vector<cv::Point2f> points_left_t0 = frame_t0->get_points_left();
+    std::vector<cv::Point2f> points_left_t1 = frame_t1->get_points_left();
 
     int radius = 2;
     cv::Mat vis;

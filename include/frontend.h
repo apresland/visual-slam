@@ -34,11 +34,12 @@ private:
     int process(std::shared_ptr<Frame> frame_t0, std::shared_ptr<Frame> frame_t1);
     int restart();
 
+    void initialize_map(std::shared_ptr<Frame> frame);
     void estimate_pose(std::shared_ptr<Frame> frame_t0,
                       std::shared_ptr<Frame> frame_t1,
                       const cv::Mat K);
-    void triangulate(std::shared_ptr<Frame> frame_t0);
-    void insert_keyframe(std::shared_ptr<Frame> frame_t1);
+    void triangulate(std::shared_ptr<Frame> frame);
+    void insert_keyframe(std::shared_ptr<Frame> frame);
     void remove_outliers(std::shared_ptr<Frame> frame, cv::Mat inliers);
 
     Detector detector_;
@@ -50,6 +51,8 @@ private:
     std::shared_ptr<Camera> camera_right_{nullptr};
     std::shared_ptr<Frame> frame_previous_{nullptr};
     std::shared_ptr<Frame> frame_current_{nullptr};
+    bool has_new_detections_{false};
+    size_t feature_id_{0};
     size_t landmark_id_{0};
     size_t frame_id_{0};
 

@@ -30,22 +30,11 @@ public:
         return features2points(features_right_);
     }
 
-    void set_features_left(const std::vector<cv::Point2f> points) {
-        points2features(points, features_left_);
-    }
-
-    void set_features_right(const std::vector<cv::Point2f> points) {
-        points2features(points, features_right_);
+    std::vector<cv::Point3f> get_points_3d() {
+        return features2points3d(features_right_);
     }
 
 private:
-
-    void points2features(const std::vector<cv::Point2f> points, std::vector<std::shared_ptr<Feature>> &features) {
-        features.clear();
-        for(auto &p : points) {
-            features.push_back(std::make_shared<Feature>(p));
-        }
-    }
 
     std::vector<cv::Point2f> features2points(std::vector<std::shared_ptr<Feature>> features) {
         std::vector<cv::Point2f> points;
@@ -55,13 +44,18 @@ private:
         return points;
     }
 
+    std::vector<cv::Point3f> features2points3d(std::vector<std::shared_ptr<Feature>> features) {
+        std::vector<cv::Point3f> points;
+        for (auto &feature : features) {
+            points.push_back(feature->point_3d_);
+        }
+        return points;
+    }
+
 public:
     int id_;
     cv::Mat image_left_;
     cv::Mat image_right_;
-    std::vector<cv::Point3f> points_3d_;
-    std::vector<cv::KeyPoint> keypoints_left_;
-    std::vector<cv::KeyPoint> keypoints_right_;
     std::vector<std::shared_ptr<Feature>> features_left_;
     std::vector<std::shared_ptr<Feature>> features_right_;
 
