@@ -1,5 +1,7 @@
 #include <vector>
 #include <memory>
+#include "frame.h"
+#include "feature.h"
 #include "matcher.h"
 
 void Matcher::match(std::shared_ptr<Frame> frame) {
@@ -144,6 +146,33 @@ void Matcher::match_circular(std::shared_ptr<Frame> frame_t0, std::shared_ptr<Fr
         frame_t1->features_right_.push_back(feature);
     }
 
-    std::cout << "[INFO] Matcher::match_circular - matched " << frame_t0->features_left_.size() << " 2D points" << std::endl;
+    std::cout << "[INFO] Matcher::match_circular - matched " << frame_t1->features_left_.size() << " 2D points" << std::endl;
 }
 
+void Matcher::track(std::shared_ptr<Frame> frame_t0, std::shared_ptr<Frame> frame_t1) {
+    std::cout << "[INFO] Matcher::track - tracking " << frame_t0->features_left_.size() << " 2D points" << std::endl;
+
+    std::vector<cv::Point2f> frame_t0_points_left = frame_t0->get_points_left();
+    std::vector<cv::Point3f> frame_t0_points_3d = frame_t0->get_points_3d();
+
+    std::vector<cv::Point2f> frame_t1_points_left = frame_t1->get_points_left();
+    std::vector<cv::Point3f> frame_t1_points_3d = frame_t1->get_points_3d();
+
+    std::vector<float> err;
+    cv::Size window_size=cv::Size(21,21);
+    cv::TermCriteria term_criteria = cv::TermCriteria(cv::TermCriteria::COUNT+cv::TermCriteria::EPS, 30, 0.01);
+    std::vector<uchar> status;
+
+    calcOpticalFlowPyrLK(frame_t0->image_left_, frame_t1->image_left_, frame_t0_points_left, frame_t1_points_left, status, err, window_size, 3, term_criteria, 0, 0.001);
+
+    for(int i=0; i < status.size(); i++) {
+        if(status[i]) {
+            cv::Point2f p2d = frame_t0_points_left[i];
+            std::shared_ptr<Feature> feature = std::make_shared<Feature>(frame_t0, p2d);
+            feature->landmark_ = frame_t0->features_left_[i]->landmark_;
+            frame_t1->features_left_.push_back(feature);
+        }
+    }
+
+    std::cout << "[INFO] Matcher::track - tracked " << frame_t1->features_left_.size() << " 2D points" << std::endl;
+}

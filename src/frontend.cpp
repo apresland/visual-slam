@@ -37,20 +37,6 @@ int Frontend::initialize(std::shared_ptr<Frame> frame) {
     detector_.detect(frame, nullptr);
     matcher_.match(frame);
     triangulate(frame);
-    /**
-for (int i = 0; i < frame->features_left_.size(); i++) {
-    std::shared_ptr<Feature> feature = frame->features_left_[i];
-    feature->id_ = feature_id_;
-    feature->frame_id_ = frame->id_;
-    feature->landmark_id_ = landmark_id_;
-    Observation observation(frame->id_, feature->id_);
-    MapPoint landmark(landmark_id_, frame->features_left_[i]->landmark_->point_3d_);
-    landmark.add_observation(observation);
-    map_->insert_landmark(landmark);
-    landmark_id_++;
-    feature_id_++;
-}
-*/
     frame->is_keyframe_ = true;
     //map_->insert_keyframe(frame);
     status_ = TRACKING;
@@ -65,6 +51,7 @@ int Frontend::process(std::shared_ptr<Frame> frame_t0, std::shared_ptr<Frame> fr
     triangulate(frame_t0);
 
     matcher_.match_circular(frame_t0, frame_t1);
+    //matcher_.track(frame_t0, frame_t1);
     estimate_pose(frame_t0, frame_t1, camera_left_->K());
 
     if(0 != frame_t0->id_) {
@@ -99,16 +86,16 @@ void Frontend::estimate_pose(std::shared_ptr<Frame> frame_t0,
                              std::shared_ptr<Frame> frame_t1,
                              const cv::Mat K)
 {
-    std::vector<cv::Point2f> points_2d_t1 = frame_t1->get_points_left();
-    std::cout << "[INFO] Frontend::estimate_pose - points { 2D " << points_2d_t1.size() << " }" << std::endl;
-    std::vector<cv::Point3f> points_3d_t0 = frame_t0->get_points_3d();
-    std::cout << "[INFO] Frontend::estimate_pose - points { 3D " << points_3d_t0.size() << " }" << std::endl;
+    std::vector<cv::Point2f> points_2d = frame_t1->get_points_left();
+    std::cout << "[INFO] Frontend::estimate_pose - points { 2D " << points_2d.size() << " }" << std::endl;
+    std::vector<cv::Point3f> points_3d = frame_t1->get_points_3d();
+    std::cout << "[INFO] Frontend::estimate_pose - points { 3D " << points_3d.size() << " }" << std::endl;
 
     cv::Mat inliers;
     cv::Mat coeffs = cv::Mat::zeros(4, 1, CV_64FC1);
     cv::Mat t = cv::Mat::zeros(3, 1, CV_64F);
     cv::Mat r = cv::Mat::zeros(3, 1, CV_64FC1);
-    cv::solvePnPRansac(points_3d_t0, points_2d_t1, K, coeffs, r, t,
+    cv::solvePnPRansac(points_3d, points_2d, K, coeffs, r, t,
                        false, 100, 1.0, 0.999, inliers );
     cv::Mat R = cv::Mat::eye(3, 3, CV_64F);
     cv::Rodrigues(r, R);
