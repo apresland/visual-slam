@@ -23,7 +23,11 @@ public:
     void update(std::shared_ptr<Frame> frame);
     void set_map(std::shared_ptr<Map> map) { map_ = map; }
     void set_backend(std::shared_ptr<Backend> backend) { backend_ = backend; }
-    void set_viewer(std::shared_ptr<Viewer> viewer) { viewer_ = viewer; }
+    void set_viewer(std::shared_ptr<Viewer> viewer) {
+        viewer_ = viewer;
+        matcher_->set_viewer(viewer_);
+    }
+    void set_matcher(std::shared_ptr<Matcher> matcher) { matcher_ = matcher; }
     void set_cameras(std::shared_ptr<Camera> camera_left, std::shared_ptr<Camera> camera_right) {
         camera_left_ = camera_left;
         camera_right_ = camera_right;
@@ -43,7 +47,7 @@ private:
     void remove_outliers(std::shared_ptr<Frame> frame, cv::Mat inliers);
 
     Detector detector_;
-    Matcher matcher_;
+    std::shared_ptr<Matcher> matcher_;
     std::shared_ptr<Map> map_ {nullptr};
     std::shared_ptr<Backend> backend_ {nullptr};
     std::shared_ptr<Viewer> viewer_{nullptr};

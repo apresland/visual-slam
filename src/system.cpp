@@ -10,6 +10,7 @@
 #include "viewer.h"
 #include "frontend.h"
 #include "backend.h"
+#include "matcher.h"
 
 System::System(std::string path_to_sequence)
     : path_root_(path_to_sequence)
@@ -34,6 +35,7 @@ bool System::Init() {
 
 void System::Run() {
 
+    std::shared_ptr<Matcher> matcher = std::make_shared<Matcher>();
     std::shared_ptr<Viewer> viewer = std::make_shared<Viewer>();
     std::shared_ptr<Map> map = std::make_shared<Map>();
 
@@ -44,9 +46,12 @@ void System::Run() {
     std::shared_ptr<Frontend> frontend = std::make_shared<Frontend>();
     frontend->set_cameras(cameras_[0], cameras_[1]);
     frontend->set_map(map);
+    frontend->set_matcher(matcher);
     frontend->set_viewer(viewer);
     frontend->set_backend(backend);
     viewer->init();
+
+    matcher->set_viewer(viewer);
 
     int index = 0;
     std::shared_ptr<Sequence::StereoPair> prev_element = nullptr;

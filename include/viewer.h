@@ -12,7 +12,9 @@ public:
     void init();
     void load_poses();
     void display_features(const std::shared_ptr<Frame> frame);
-    void display_tracking(const std::shared_ptr<Frame> frame_t0, const std::shared_ptr<Frame> frame_t1);
+    void display_tracking(const std::vector<cv::Point2f> &points_left_t0,
+                          const std::vector<cv::Point2f> &points_left_t1,
+                          const cv::Mat &image_left_t1);
     void display_trajectory(Sophus::SE3d T_c_w_, unsigned int true_pose_id);
 
 private:

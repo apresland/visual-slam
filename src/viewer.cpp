@@ -5,6 +5,7 @@
 const std::string FEATURES_WINDOW_NAME = "Features";
 const std::string BUCKETED_FEATURES_WINDOW_NAME = "Bucketed Fetures";
 const std::string CIRCULAR_MATCHES_WINDOW_NAME = "Circular Matched Features";
+const std::string OPTICAL_FLOW_WINDOW_NAME = "Optical Flow";
 
 Viewer::Viewer() {}
 
@@ -12,6 +13,7 @@ void Viewer::init() {
     cv::namedWindow(FEATURES_WINDOW_NAME);
     cv::namedWindow(BUCKETED_FEATURES_WINDOW_NAME);
     cv::namedWindow(CIRCULAR_MATCHES_WINDOW_NAME);
+    cv::namedWindow(OPTICAL_FLOW_WINDOW_NAME);
     //cv::namedWindow(DISPARITY_WINDOW_NAME);
 }
 
@@ -41,12 +43,9 @@ void Viewer::display_features(const std::shared_ptr<Frame> frame) {
     cv::waitKey(1);
 }
 
-void Viewer::display_tracking(const std::shared_ptr<Frame> frame_t0, const std::shared_ptr<Frame> frame_t1) {
-
-    const cv::Mat &image_left_t1 = frame_t0->image_left_;
-    std::vector<cv::Point2f> points_left_t0 = frame_t0->get_points_left();
-    std::vector<cv::Point2f> points_left_t1 = frame_t1->get_points_left();
-
+void Viewer::display_tracking(const std::vector<cv::Point2f> &points_left_t0,
+                              const std::vector<cv::Point2f> &points_left_t1,
+                              const cv::Mat &image_left_t1) {
     int radius = 2;
     cv::Mat vis;
     cv::cvtColor(image_left_t1, vis, cv::COLOR_GRAY2BGR, 3);
@@ -64,6 +63,7 @@ void Viewer::display_tracking(const std::shared_ptr<Frame> frame_t0, const std::
         cv::line(vis, points_left_t0[i], points_left_t1[i], CV_RGB(0,255,0));
     }
     cv::imshow("Optical flow ", vis );
+    cv::waitKey(1);
 }
 
 void Viewer::display_trajectory(Sophus::SE3d T_c_w, unsigned int true_pose_id) {

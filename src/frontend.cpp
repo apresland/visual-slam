@@ -35,7 +35,7 @@ void Frontend::update(std::shared_ptr<Frame> frame) {;
 int Frontend::initialize(std::shared_ptr<Frame> frame) {
     viewer_->load_poses();
     detector_.detect(frame, nullptr);
-    matcher_.match(frame);
+    matcher_->match(frame);
     triangulate(frame);
     frame->is_keyframe_ = true;
     //map_->insert_keyframe(frame);
@@ -47,11 +47,11 @@ int Frontend::process(std::shared_ptr<Frame> frame_t0, std::shared_ptr<Frame> fr
     // -----------------------------------------------------------------------------------------------------------------
     // Estimation :
     // -----------------------------------------------------------------------------------------------------------------
-    matcher_.match(frame_t0);
+    matcher_->match(frame_t0);
     triangulate(frame_t0);
 
-    matcher_.match_circular(frame_t0, frame_t1);
-    //matcher_.track(frame_t0, frame_t1);
+    matcher_->match_circular(frame_t0, frame_t1);
+    matcher_->track(frame_t0, frame_t1);
     estimate_pose(frame_t0, frame_t1, camera_left_->K());
 
     if(0 != frame_t0->id_) {
@@ -62,7 +62,6 @@ int Frontend::process(std::shared_ptr<Frame> frame_t0, std::shared_ptr<Frame> fr
     // Visualization :
     // -----------------------------------------------------------------------------------------------------------------
     viewer_->display_features(frame_t1);
-    viewer_->display_tracking(frame_t0, frame_t1);
     viewer_->display_trajectory(frame_t1->get_pose(), frame_id_);
 
 
