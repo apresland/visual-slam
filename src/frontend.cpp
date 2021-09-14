@@ -108,7 +108,7 @@ void Frontend::estimate_pose(std::shared_ptr<Frame> frame_t0,
     SO3_t << t.at<double>(0, 0), t.at<double>(1, 0), t.at<double>(2, 0);
     Sophus::SE3d T = Sophus::SE3d(SO3_R, SO3_t);
 
-    remove_outliers(frame_t0, inliers);
+    //remove_outliers(frame_t0, inliers);
     remove_outliers(frame_t1, inliers);
 
     double distance = cv::norm(t);
@@ -156,21 +156,18 @@ void Frontend::triangulate(std::shared_ptr<Frame> frame) {
 
 void Frontend::remove_outliers(std::shared_ptr<Frame> frame, cv::Mat inliers) {
 
-    for (int idx = 0; idx < inliers.rows; idx++) {
+    for (int idx = 0; idx < inliers.rows; idx++)
+    {
         int index = inliers.at<int>(idx, 0);
         frame->features_left_[index]->is_inlier_ = true;
-        frame->features_right_[index]->is_inlier_ = true;
     }
 
     std::vector<std::shared_ptr<Feature>> features_left(frame->features_left_);
     frame->features_left_.clear();
     for ( int i =0; i < features_left.size(); i++)
+    {
         if ( features_left[i]->is_inlier_) frame->features_left_.push_back(features_left[i]);
-
-    std::vector<std::shared_ptr<Feature>> features_right(frame->features_right_);
-    frame->features_right_.clear();
-    for ( int i =0; i < features_right.size(); i++)
-        if ( features_right[i]->is_inlier_) frame->features_right_.push_back(features_right[i]);
+    }
 }
 
 void Frontend::insert_keyframe(std::shared_ptr<Frame> frame) {

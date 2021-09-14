@@ -124,28 +124,6 @@ void Matcher::match_circular(std::shared_ptr<Frame> frame_t0, std::shared_ptr<Fr
         frame_t0->features_right_.push_back(feature);
     }
 
-    frame_t1->features_left_.clear();
-    for ( int i =0; i < frame_t1_points_left.size(); i++ ) {
-        cv::Point2f pt2d = frame_t1_points_left[i];
-        cv::Point3f pt3d = frame_t0_points_3d[i];
-        std::shared_ptr<MapPoint> map_point = std::make_shared<MapPoint>();
-        map_point->point_3d_ = pt3d;
-        std::shared_ptr<Feature> feature = std::make_shared<Feature>(frame_t0, pt2d);
-        feature->landmark_ = map_point;
-        frame_t1->features_left_.push_back(feature);
-    }
-
-    frame_t1->features_right_.clear();
-    for ( int i =0; i < frame_t1_points_right.size(); i++ ) {
-        cv::Point2f pt2d = frame_t1_points_right[i];
-        cv::Point3f pt3d = frame_t0_points_3d[i];
-        std::shared_ptr<MapPoint> map_point = std::make_shared<MapPoint>();
-        map_point->point_3d_ = pt3d;
-        std::shared_ptr<Feature> feature = std::make_shared<Feature>(frame_t0, pt2d);
-        feature->landmark_ = map_point;
-        frame_t1->features_right_.push_back(feature);
-    }
-
     std::cout << "[INFO] Matcher::match_circular - matched " << frame_t1->features_left_.size() << " 2D points" << std::endl;
 }
 
