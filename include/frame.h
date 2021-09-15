@@ -47,8 +47,12 @@ private:
     std::vector<cv::Point3f> features2points3d(std::vector<std::shared_ptr<Feature>> features) {
         std::vector<cv::Point3f> points;
         for (auto &feature : features) {
-            if(! feature->landmark_) {std::cout << "undefined landmark" << std::endl;}
-            points.push_back(feature->landmark_->point_3d_);
+            if(feature->landmark_) {
+                auto mappoint = feature->landmark_;
+                points.push_back(mappoint->point_3d_);
+            } else {
+                std::cout << "expired landmark" << std::endl;
+            }
         }
         return points;
     }

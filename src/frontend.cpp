@@ -38,7 +38,7 @@ int Frontend::initialize(std::shared_ptr<Frame> frame) {
     matcher_->match(frame);
     triangulate(frame);
     frame->is_keyframe_ = true;
-    //map_->insert_keyframe(frame);
+    map_->insert_keyframe(frame);
     status_ = TRACKING;
 }
 
@@ -47,15 +47,14 @@ int Frontend::process(std::shared_ptr<Frame> frame_t0, std::shared_ptr<Frame> fr
     // -----------------------------------------------------------------------------------------------------------------
     // Estimation :
     // -----------------------------------------------------------------------------------------------------------------
-    matcher_->match(frame_t0);
+    matcher_->match_circular(frame_t0, frame_t1);
     triangulate(frame_t0);
 
-    matcher_->match_circular(frame_t0, frame_t1);
     matcher_->track(frame_t0, frame_t1);
     estimate_pose(frame_t0, frame_t1, camera_left_->K());
 
     if(0 != frame_t0->id_) {
-        //insert_keyframe(frame_t1);
+        insert_keyframe(frame_t1);
     }
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -108,7 +107,6 @@ void Frontend::estimate_pose(std::shared_ptr<Frame> frame_t0,
     SO3_t << t.at<double>(0, 0), t.at<double>(1, 0), t.at<double>(2, 0);
     Sophus::SE3d T = Sophus::SE3d(SO3_R, SO3_t);
 
-    //remove_outliers(frame_t0, inliers);
     remove_outliers(frame_t1, inliers);
 
     double distance = cv::norm(t);
@@ -133,6 +131,13 @@ void Frontend::triangulate(std::shared_ptr<Frame> frame) {
     std::vector<cv::Point2f>  matches_2d_left = frame->get_points_left();
     std::vector<cv::Point2f>  matches_2d_right = frame->get_points_right();
 
+    int num_predefined = 0;
+    for (auto &feature : frame->features_left_)
+    {
+        if(feature->landmark_) num_predefined++;
+    }
+    std::cout << "Frontend::triangulate - " << num_predefined << " predefined mappoints" << std::endl;
+
     std::cout << "[INFO] Frontend::triangulate - input points 2D { L"
         << matches_2d_left.size() << " : R"
         << matches_2d_right.size() << "}" << std::endl;
@@ -143,12 +148,19 @@ void Frontend::triangulate(std::shared_ptr<Frame> frame) {
     cv::triangulatePoints(proj_matrix_left, proj_matrix_right, matches_2d_left, matches_2d_right, points4D);
     cv::convertPointsFromHomogeneous(points4D.t(), points3D);
 
+    std::cout << "[INFO] Frontend::triangulate - defining " << points3D.rows << " mappoints" << std::endl;
     for(int i=0; i< points3D.rows; ++i) {
+        int frame_id = frame->id_;
+        int feature_id = frame->features_left_.at(i)->id_;
+        unsigned long landmark_id = ++landmark_id_;
         cv::Point3f p3d = *points3D.ptr<cv::Point3f>(i);
         std::shared_ptr<MapPoint> map_point = std::make_shared<MapPoint>();
         map_point->point_3d_ = p3d;
+        //Observation observation(frame_id, feature_id);
+        //map_point->add_observation(observation);
         frame->features_left_[i]->landmark_ = map_point;
-        frame->features_right_[i]->landmark_ = map_point;
+        //frame->features_right_[i]->landmark_ = map_point;
+        //map_->insert_landmark(*map_point);
     }
 
     std::cout << "[INFO] Frontend::triangulate - output points 3D { " << points3D.rows << " }" << std::endl;

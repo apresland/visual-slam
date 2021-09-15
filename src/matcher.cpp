@@ -31,14 +31,10 @@ void Matcher::match(std::shared_ptr<Frame> frame) {
             // erase bad matches
             frame_t0_points_left.erase (frame_t0_points_left.begin() + (i - deletion_correction));
             frame_t0_points_right.erase (frame_t0_points_right.begin() + (i - deletion_correction));
+            frame->features_left_.erase (frame->features_left_.begin() + (i - deletion_correction));
 
             deletion_correction++;
         }
-    }
-
-    frame->features_left_.clear();
-    for ( auto & pt : frame_t0_points_left ) {
-        frame->features_left_.push_back(std::make_shared<Feature>(frame, pt));
     }
 
     frame->features_right_.clear();
@@ -53,11 +49,9 @@ void Matcher::match_circular(std::shared_ptr<Frame> frame_t0, std::shared_ptr<Fr
 
     std::vector<cv::Point2f> frame_t0_points_left = frame_t0->get_points_left();
     std::vector<cv::Point2f> frame_t0_points_right = frame_t0->get_points_right();
-    std::vector<cv::Point3f> frame_t0_points_3d = frame_t0->get_points_3d();
 
     std::vector<cv::Point2f> frame_t1_points_left = frame_t1->get_points_left();
     std::vector<cv::Point2f> frame_t1_points_right = frame_t1->get_points_right();
-    std::vector<cv::Point3f> frame_t1_points_3d = frame_t1->get_points_3d();
 
     std::vector<float> err;
     cv::Size window_size=cv::Size(21,21);
@@ -93,38 +87,21 @@ void Matcher::match_circular(std::shared_ptr<Frame> frame_t0, std::shared_ptr<Fr
             // erase bad matches
             frame_t0_points_left.erase (frame_t0_points_left.begin() + (i - deletion_correction));
             frame_t0_points_right.erase (frame_t0_points_right.begin() + (i - deletion_correction));
-            frame_t0_points_3d.erase (frame_t0_points_3d.begin() + (i - deletion_correction));
             frame_t1_points_left.erase (frame_t1_points_left.begin() + (i - deletion_correction));
             frame_t1_points_right.erase (frame_t1_points_right.begin() + (i - deletion_correction));
-            frame_t1_points_3d.erase (frame_t1_points_3d.begin() + (i - deletion_correction));
-
+            frame_t0->features_left_.erase(frame_t0->features_left_.begin() + (i - deletion_correction));
             deletion_correction++;
         }
-    }
-
-    frame_t0->features_left_.clear();
-    for ( int i =0; i < frame_t0_points_left.size(); i++ ) {
-        cv::Point2f pt2d = frame_t0_points_left[i];
-        cv::Point3f pt3d = frame_t0_points_3d[i];
-        std::shared_ptr<MapPoint> map_point = std::make_shared<MapPoint>();
-        map_point->point_3d_ = pt3d;
-        std::shared_ptr<Feature> feature = std::make_shared<Feature>(frame_t0, pt2d);
-        feature->landmark_ = map_point;
-        frame_t0->features_left_.push_back(feature);
     }
 
     frame_t0->features_right_.clear();
     for ( int i =0; i < frame_t0_points_right.size(); i++ ) {
         cv::Point2f pt2d = frame_t0_points_right[i];
-        cv::Point3f pt3d = frame_t0_points_3d[i];
-        std::shared_ptr<MapPoint> map_point = std::make_shared<MapPoint>();
-        map_point->point_3d_ = pt3d;
         std::shared_ptr<Feature> feature = std::make_shared<Feature>(frame_t0, pt2d);
-        feature->landmark_ = map_point;
         frame_t0->features_right_.push_back(feature);
     }
 
-    std::cout << "[INFO] Matcher::match_circular - matched " << frame_t1->features_left_.size() << " 2D points" << std::endl;
+    std::cout << "[INFO] Matcher::match_circular - matched " << frame_t0->features_right_.size() << " 2D points" << std::endl;
 }
 
 void Matcher::track(std::shared_ptr<Frame> frame_t0, std::shared_ptr<Frame> frame_t1) {

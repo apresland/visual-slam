@@ -21,7 +21,6 @@ public:
     std::shared_ptr<Frame> frame_;
     std::shared_ptr<MapPoint> landmark_;
     cv::Point2f point_2d_;
-    //cv::Point3f point_3d_;
     bool is_inlier_{false};
 };
 
