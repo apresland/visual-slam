@@ -43,9 +43,9 @@ void Matcher::match(std::shared_ptr<Frame> frame) {
     }
 }
 
-void Matcher::match_circular(std::shared_ptr<Frame> frame_t0, std::shared_ptr<Frame> frame_t1) {
+void Matcher::match(std::shared_ptr<Frame> frame_t0, std::shared_ptr<Frame> frame_t1) {
 
-    std::cout << "[INFO] Matcher::match_circular - matching " << frame_t0->features_left_.size() << " 2D points" << std::endl;
+    std::cout << "[INFO] Matcher::match - matching " << frame_t0->features_left_.size() << " 2D points" << std::endl;
 
     std::vector<cv::Point2f> frame_t0_points_left = frame_t0->get_points_left();
     std::vector<cv::Point2f> frame_t0_points_right = frame_t0->get_points_right();
@@ -101,7 +101,7 @@ void Matcher::match_circular(std::shared_ptr<Frame> frame_t0, std::shared_ptr<Fr
         frame_t0->features_right_.push_back(feature);
     }
 
-    std::cout << "[INFO] Matcher::match_circular - matched " << frame_t0->features_right_.size() << " 2D points" << std::endl;
+    std::cout << "[INFO] Matcher::match - matched " << frame_t0->features_right_.size() << " 2D points" << std::endl;
 }
 
 void Matcher::track(std::shared_ptr<Frame> frame_t0, std::shared_ptr<Frame> frame_t1) {

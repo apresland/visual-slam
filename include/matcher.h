@@ -9,7 +9,7 @@ class Matcher {
 public:
     Matcher() {}
     void match(std::shared_ptr<Frame> frame);
-    void match_circular(std::shared_ptr<Frame> frame_t0, std::shared_ptr<Frame> frame_t1);
+    void match(std::shared_ptr<Frame> frame_t0, std::shared_ptr<Frame> frame_t1);
     void track(std::shared_ptr<Frame> frame_t0, std::shared_ptr<Frame> frame_t1);
     void set_viewer(std::shared_ptr<Viewer> viewer) {viewer_ = viewer;}
     std::shared_ptr<Viewer> viewer_;

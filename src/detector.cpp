@@ -39,6 +39,7 @@ bool Detector::detect(std::shared_ptr<Frame> frame_t0, std::shared_ptr<Frame> fr
     std::sort(keypoints.begin(), keypoints.end(), keypoint_response_comparitor);
 
     // fill unoccupied cells with best detections
+    int new_feature_count = 0;
     for (int i =0; i < keypoints.size(); i++)
     {
         int x = keypoints[i].pt.x;
@@ -47,7 +48,9 @@ bool Detector::detect(std::shared_ptr<Frame> frame_t0, std::shared_ptr<Frame> fr
         if ( ! occupancy_grid.at(index)) {
             frame_t0->features_left_.push_back(std::make_shared<Feature>(frame_t0, keypoints[i].pt));
             occupancy_grid.at(index) = true;
+            ++new_feature_count;
         }
-
     }
+
+    std::cout << "[INFO] Detector::detected - keypoints: total { " << frame_t0->features_left_.size() <<  " : new " << new_feature_count << " }" << std::endl;
 }
