@@ -11,6 +11,8 @@
 #include "frontend.h"
 #include "backend.h"
 #include "matcher.h"
+#include "triangulator.h"
+#include "estimation.h"
 
 System::System(std::string path_to_sequence)
     : path_root_(path_to_sequence)
@@ -36,6 +38,9 @@ bool System::Init() {
 void System::Run() {
 
     std::shared_ptr<Matcher> matcher = std::make_shared<Matcher>();
+    std::shared_ptr<Tracker> tracker = std::make_shared<Tracker>();
+    std::shared_ptr<Triangulator> triangulator = std::make_shared<Triangulator>(cameras_[0], cameras_[1]);
+    std::shared_ptr<Estimation> estimation = std::shared_ptr<Estimation>();
     std::shared_ptr<Viewer> viewer = std::make_shared<Viewer>();
     std::shared_ptr<Map> map = std::make_shared<Map>();
 
@@ -47,6 +52,9 @@ void System::Run() {
     frontend->set_cameras(cameras_[0], cameras_[1]);
     frontend->set_map(map);
     frontend->set_matcher(matcher);
+    frontend->set_tracker(tracker);
+    frontend->set_triangulator(triangulator);
+    frontend->set_estimation(estimation);
     frontend->set_viewer(viewer);
     frontend->set_backend(backend);
     viewer->init();

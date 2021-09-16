@@ -35,7 +35,16 @@ int Frontend::initialize(std::shared_ptr<Frame> frame) {
     viewer_->load_poses();
     detector_.detect(frame, nullptr);
     matcher_->match(frame);
-    triangulate(frame);
+    triangulator_->triangulate(frame);
+    for (auto &f : frame->features_left_)
+    {
+        auto & p3d = f->landmark_->point_3d_;
+        Eigen::Vector3d v3d(p3d.x, p3d.y, p3d.z);
+        v3d = frame->get_pose() * v3d;
+        p3d.x = v3d[0];
+        p3d.y = v3d[1];
+        p3d.z = v3d[2];
+    }
     frame->is_keyframe_ = true;
     map_->insert_keyframe(frame);
     status_ = TRACKING;
@@ -48,12 +57,16 @@ int Frontend::process(std::shared_ptr<Frame> frame_previous, std::shared_ptr<Fra
     // -----------------------------------------------------------------------------------------------------------------
     // Tracking : track features from previous frame using KLT method
     // -----------------------------------------------------------------------------------------------------------------
-    matcher_->track(frame_previous, frame_current);
+    tracker_->track(frame_previous, frame_current);
 
     // -----------------------------------------------------------------------------------------------------------------
-    // Estimation : estimate current pose (PnP method)
+    // Estimation : current pose estimate (PnP method) based on previous landmarks
     // -----------------------------------------------------------------------------------------------------------------
-    estimate_pose(frame_previous, frame_current, camera_left_->K());
+    estimation_->estimate(frame_previous, frame_current, camera_left_->K());
+
+    // -----------------------------------------------------------------------------------------------------------------
+    // Landmarks : transform triangulated features (camara frame) into world frame ready for next iteration
+    // -----------------------------------------------------------------------------------------------------------------
     for (auto &f : frame_current->features_left_)
     {
         auto & p3d = f->landmark_->point_3d_;
@@ -63,7 +76,6 @@ int Frontend::process(std::shared_ptr<Frame> frame_previous, std::shared_ptr<Fra
         p3d.y = v3d[1];
         p3d.z = v3d[2];
     }
-
 
     if(0 != frame_current->id_) {
         insert_keyframe(frame_current);
@@ -82,130 +94,20 @@ int Frontend::process(std::shared_ptr<Frame> frame_previous, std::shared_ptr<Fra
     }
 
     // -----------------------------------------------------------------------------------------------------------------
-    // Matching : stereo match features using a circular method
+    // Matching : stereo match 2D features using a circular method
     // -----------------------------------------------------------------------------------------------------------------
     matcher_->match(frame_current, frame_next);
 
     // -----------------------------------------------------------------------------------------------------------------
-    // Triangulation : triangulate 3D map points from new stereo matched 2D features
+    // Triangulator : 3D map points triangulated from new stereo matched 2D features
     // -----------------------------------------------------------------------------------------------------------------
-    triangulate(frame_current);
+    triangulator_->triangulate(frame_current);
 }
 
 int Frontend::restart() {
 
 }
 
-// 3D-to-2D: Motion from 3D structure and 2D image feature correspondence.
-// Use the Perspective-n-Point (PnP) algorithm to provide "perspective-from-3-points" (P3P). Estimates
-// the camera get_pose (t,r) that minimizes the reprojection error of 3D points onto the 2D image. Convert the
-// rotation vector (r) into a rotation matrix (R) with Rodrigues algorithm.
-void Frontend::estimate_pose(std::shared_ptr<Frame> frame_previous,
-                             std::shared_ptr<Frame> frame_current,
-                             const cv::Mat K)
-{
-    std::vector<cv::Point2f> points_2d = frame_current->get_points_left();
-    std::cout << "[INFO] Frontend::estimate_pose - points { 2D " << points_2d.size() << " }" << std::endl;
-    std::vector<cv::Point3f> points_3d = frame_current->get_points_3d();
-    std::cout << "[INFO] Frontend::estimate_pose - points { 3D " << points_3d.size() << " }" << std::endl;
-
-    cv::Mat inliers;
-    cv::Mat coeffs = cv::Mat::zeros(4, 1, CV_64FC1);
-    cv::Mat t = cv::Mat::zeros(3, 1, CV_64F);
-    cv::Mat r = cv::Mat::zeros(3, 1, CV_64FC1);
-    cv::solvePnPRansac(points_3d, points_2d, K, coeffs, r, t,
-                       false, 100, 1.0, 0.999, inliers );
-    cv::Mat R = cv::Mat::eye(3, 3, CV_64F);
-    cv::Rodrigues(r, R);
-
-    // Relative motion (T)
-    Eigen::Matrix3d SO3_R;
-    Eigen::Vector3d SO3_t;
-    SO3_R << R.at<double>(0, 0), R.at<double>(0, 1), R.at<double>(0, 2),
-            R.at<double>(1, 0), R.at<double>(1, 1), R.at<double>(1, 2),
-            R.at<double>(2, 0), R.at<double>(2, 1), R.at<double>(2, 2);
-    SO3_t << t.at<double>(0, 0), t.at<double>(1, 0), t.at<double>(2, 0);
-
-    Sophus::SE3d T = Sophus::SE3d(SO3_R, SO3_t);
-
-    remove_outliers(frame_current, inliers);
-
-    double distance = cv::norm(t);
-    double angle = cv::norm(R);
-    std::cout << "[INFO] Frontend::esimate_pose - relative motion = " << distance << " angle = " << angle << std::endl;
-
-    bool is_keyframe = true;
-    Sophus::SE3d T_c_w = frame_previous->get_pose();
-    if (distance > 0.05 && distance < 5) {
-        frame_current->is_keyframe_ = true;
-        T_c_w = T_c_w * T.inverse();
-        T_c_w_ = T_c_w;
-    } else {
-        frame_current->is_keyframe_ = false;
-        std::cout << "[WARNING] get_pose not updated due to out-of-bounds scale value" << distance << std::endl;
-    }
-
-    frame_current->set_pose(T_c_w_);
-}
-
-void Frontend::triangulate(std::shared_ptr<Frame> frame) {
-
-    std::vector<cv::Point2f>  matches_2d_left = frame->get_points_left();
-    std::vector<cv::Point2f>  matches_2d_right = frame->get_points_right();
-
-    std::cout << "[INFO] Frontend::triangulate - input points 2D { L"
-        << matches_2d_left.size() << " : R"
-        << matches_2d_right.size() << "}" << std::endl;
-
-    cv::Mat proj_matrix_left = camera_left_->P();
-    cv::Mat proj_matrix_right = camera_right_->P();
-    cv::Mat points3D, points4D;
-    cv::triangulatePoints(proj_matrix_left, proj_matrix_right, matches_2d_left, matches_2d_right, points4D);
-    cv::convertPointsFromHomogeneous(points4D.t(), points3D);
-
-    assert(points3D.rows == frame->features_left_.size());
-
-    int num_predefined = 0;
-    std::cout << "[INFO] Frontend::triangulate - defining " << points3D.rows << " mappoints" << std::endl;
-    for(int i=0; i< points3D.rows; ++i) {
-        if ( frame->features_left_[i]->landmark_ ) num_predefined++;
-
-        cv::Point3f p3d = *points3D.ptr<cv::Point3f>(i);
-        Eigen::Vector3d v3d(p3d.x, p3d.y, p3d.z);
-
-        //Sophus::SE3d T_c_w = frame->get_pose();
-        //Sophus::SE3d T_w_c = frame->get_pose().inverse();
-        //v3d = T_c_w * v3d;
-        p3d.x = v3d[0];
-        p3d.y = v3d[1];
-        p3d.z = v3d[2];
-
-        std::shared_ptr<MapPoint> map_point = std::make_shared<MapPoint>();
-        map_point->point_3d_ = p3d;
-        frame->features_left_[i]->landmark_ = map_point;
-        frame->features_right_[i]->landmark_ = map_point;
-        //map_->insert_landmark(*map_point);
-    }
-
-    std::cout << "[INFO] Frontend::triangulate - " << num_predefined << " predefined mappoints "
-    << frame->features_left_.size() - num_predefined << " new" << std::endl;
-}
-
-void Frontend::remove_outliers(std::shared_ptr<Frame> frame, cv::Mat inliers) {
-
-    for (int idx = 0; idx < inliers.rows; idx++)
-    {
-        int index = inliers.at<int>(idx, 0);
-        frame->features_left_[index]->is_inlier_ = true;
-    }
-
-    std::vector<std::shared_ptr<Feature>> features_left(frame->features_left_);
-    frame->features_left_.clear();
-    for ( int i =0; i < features_left.size(); i++)
-    {
-        if ( features_left[i]->is_inlier_) frame->features_left_.push_back(features_left[i]);
-    }
-}
 
 void Frontend::insert_keyframe(std::shared_ptr<Frame> frame) {
 

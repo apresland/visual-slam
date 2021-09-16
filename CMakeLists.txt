@@ -46,6 +46,9 @@ add_executable(stereo
         src/camera.cpp
         src/detector.cpp
         src/matcher.cpp
+        src/tracker.cpp
+        src/triangulator.cpp
+        src/estimation.cpp
         src/optimization.cpp
         src/viewer.cpp)
 target_link_libraries(stereo
