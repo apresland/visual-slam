@@ -51,17 +51,28 @@ int Frontend::process(std::shared_ptr<Frame> frame_previous, std::shared_ptr<Fra
     matcher_->track(frame_previous, frame_current);
 
     // -----------------------------------------------------------------------------------------------------------------
-    // Visualization : update visualization with current estimated state
-    // -----------------------------------------------------------------------------------------------------------------
-    viewer_->update(frame_previous, frame_current);
-
-    // -----------------------------------------------------------------------------------------------------------------
-    // Estimation : estimate current pose with PnP method
+    // Estimation : estimate current pose (PnP method)
     // -----------------------------------------------------------------------------------------------------------------
     estimate_pose(frame_previous, frame_current, camera_left_->K());
+    for (auto &f : frame_current->features_left_)
+    {
+        auto & p3d = f->landmark_->point_3d_;
+        Eigen::Vector3d v3d(p3d.x, p3d.y, p3d.z);
+        v3d = frame_previous->get_pose() * v3d;
+        p3d.x = v3d[0];
+        p3d.y = v3d[1];
+        p3d.z = v3d[2];
+    }
+
+
     if(0 != frame_current->id_) {
         insert_keyframe(frame_current);
     }
+
+    // -----------------------------------------------------------------------------------------------------------------
+    // Visualization : update visualization with current estimated state
+    // -----------------------------------------------------------------------------------------------------------------
+    viewer_->update(frame_previous, frame_current);
 
     // -----------------------------------------------------------------------------------------------------------------
     // Detection : detect new features with FAST and bucketing
@@ -128,12 +139,13 @@ void Frontend::estimate_pose(std::shared_ptr<Frame> frame_previous,
     if (distance > 0.05 && distance < 5) {
         frame_current->is_keyframe_ = true;
         T_c_w = T_c_w * T.inverse();
+        T_c_w_ = T_c_w;
     } else {
         frame_current->is_keyframe_ = false;
         std::cout << "[WARNING] get_pose not updated due to out-of-bounds scale value" << distance << std::endl;
     }
 
-    frame_current->set_pose(T_c_w);
+    frame_current->set_pose(T_c_w_);
 }
 
 void Frontend::triangulate(std::shared_ptr<Frame> frame) {
@@ -157,12 +169,22 @@ void Frontend::triangulate(std::shared_ptr<Frame> frame) {
     std::cout << "[INFO] Frontend::triangulate - defining " << points3D.rows << " mappoints" << std::endl;
     for(int i=0; i< points3D.rows; ++i) {
         if ( frame->features_left_[i]->landmark_ ) num_predefined++;
+
         cv::Point3f p3d = *points3D.ptr<cv::Point3f>(i);
+        Eigen::Vector3d v3d(p3d.x, p3d.y, p3d.z);
+
+        //Sophus::SE3d T_c_w = frame->get_pose();
+        //Sophus::SE3d T_w_c = frame->get_pose().inverse();
+        //v3d = T_c_w * v3d;
+        p3d.x = v3d[0];
+        p3d.y = v3d[1];
+        p3d.z = v3d[2];
+
         std::shared_ptr<MapPoint> map_point = std::make_shared<MapPoint>();
         map_point->point_3d_ = p3d;
         frame->features_left_[i]->landmark_ = map_point;
         frame->features_right_[i]->landmark_ = map_point;
-        map_->insert_landmark(*map_point);
+        //map_->insert_landmark(*map_point);
     }
 
     std::cout << "[INFO] Frontend::triangulate - " << num_predefined << " predefined mappoints "

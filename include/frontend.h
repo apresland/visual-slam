@@ -60,6 +60,9 @@ private:
     size_t landmark_id_{0};
     size_t frame_id_{0};
 
+    Sophus::SE3d T_c_w_;
+    Sophus::SE3d relative_motion_;
+
     Status status_{INITIALIZING};
 };
 
