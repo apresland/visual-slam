@@ -46,34 +46,40 @@ int Frontend::process(std::shared_ptr<Frame> frame_previous, std::shared_ptr<Fra
     if ( ! frame_previous || ! frame_current || ! frame_next) return -1;
 
     // -----------------------------------------------------------------------------------------------------------------
-    // Track :
+    // Tracking : track features from previous frame using KLT method
     // -----------------------------------------------------------------------------------------------------------------
     matcher_->track(frame_previous, frame_current);
-    estimate_pose(frame_previous, frame_current, camera_left_->K());
 
+    // -----------------------------------------------------------------------------------------------------------------
+    // Estimation : estimate current pose with PnP method
+    // -----------------------------------------------------------------------------------------------------------------
+    estimate_pose(frame_previous, frame_current, camera_left_->K());
     if(0 != frame_current->id_) {
         insert_keyframe(frame_current);
     }
 
     // -----------------------------------------------------------------------------------------------------------------
-    // Visualization :
-    // -----------------------------------------------------------------------------------------------------------------
-    viewer_->display_features(frame_current);
-    viewer_->display_trajectory(frame_current, frame_id_);
-
-
-    // -----------------------------------------------------------------------------------------------------------------
-    // Detection :
+    // Detection : detect new features with FAST and bucketing
     // -----------------------------------------------------------------------------------------------------------------
     if (frame_id_ % 5 == 0) {
         detector_.detect(frame_current, frame_previous);
     }
 
     // -----------------------------------------------------------------------------------------------------------------
-    // Triangulate :
+    // Matching : stereo match features using a circular method
     // -----------------------------------------------------------------------------------------------------------------
     matcher_->match(frame_current, frame_next);
+
+    // -----------------------------------------------------------------------------------------------------------------
+    // Triangulation : triangulate 3D map points from new stereo matched 2D features
+    // -----------------------------------------------------------------------------------------------------------------
     triangulate(frame_current);
+
+    // -----------------------------------------------------------------------------------------------------------------
+    // Visualization : update visualization with current estimated state
+    // -----------------------------------------------------------------------------------------------------------------
+    viewer_->display_features(frame_current);
+    viewer_->display_trajectory(frame_current, frame_id_);
 }
 
 int Frontend::restart() {
