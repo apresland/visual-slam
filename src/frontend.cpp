@@ -11,16 +11,14 @@ Frontend::Frontend() {}
 void Frontend::update(std::shared_ptr<Frame> frame) {;
 
     frame->id_ = frame_id_;
-    std::cout << "Frame:" << frame->id_ << std::endl;
-
-    frame_current_ = frame;
+    frame_next_ = frame;
 
     switch (status_) {
         case INITIALIZING:
-            initialize(frame_current_);
+            initialize(frame_next_);
             break;
         case TRACKING:
-            process(frame_previous_, frame_current_);
+            process(frame_previous_, frame_current_, frame_next_);
             break;
         case LOST:
             restart();
@@ -28,6 +26,7 @@ void Frontend::update(std::shared_ptr<Frame> frame) {;
     }
 
     frame_previous_ = frame_current_;
+    frame_current_ = frame_next_;
 
     ++frame_id_;
 }
@@ -42,34 +41,39 @@ int Frontend::initialize(std::shared_ptr<Frame> frame) {
     status_ = TRACKING;
 }
 
-int Frontend::process(std::shared_ptr<Frame> frame_t0, std::shared_ptr<Frame> frame_t1) {
+int Frontend::process(std::shared_ptr<Frame> frame_previous, std::shared_ptr<Frame> frame_current, std::shared_ptr<Frame> frame_next) {
+
+    if ( ! frame_previous || ! frame_current || ! frame_next) return -1;
 
     // -----------------------------------------------------------------------------------------------------------------
-    // Estimation :
+    // Track :
     // -----------------------------------------------------------------------------------------------------------------
-    matcher_->match(frame_t0, frame_t1);
-    triangulate(frame_t0);
+    matcher_->track(frame_previous, frame_current);
+    estimate_pose(frame_previous, frame_current, camera_left_->K());
 
-    matcher_->track(frame_t0, frame_t1);
-    estimate_pose(frame_t0, frame_t1, camera_left_->K());
-
-    if(0 != frame_t0->id_) {
-        insert_keyframe(frame_t1);
+    if(0 != frame_current->id_) {
+        insert_keyframe(frame_current);
     }
 
     // -----------------------------------------------------------------------------------------------------------------
     // Visualization :
     // -----------------------------------------------------------------------------------------------------------------
-    viewer_->display_features(frame_t1);
-    viewer_->display_trajectory(frame_t1->get_pose(), frame_id_);
+    viewer_->display_features(frame_current);
+    viewer_->display_trajectory(frame_current, frame_id_);
 
 
     // -----------------------------------------------------------------------------------------------------------------
     // Detection :
     // -----------------------------------------------------------------------------------------------------------------
     if (frame_id_ % 5 == 0) {
-        detector_.detect(frame_t1, frame_t0);
+        detector_.detect(frame_current, frame_previous);
     }
+
+    // -----------------------------------------------------------------------------------------------------------------
+    // Triangulate :
+    // -----------------------------------------------------------------------------------------------------------------
+    matcher_->match(frame_current, frame_next);
+    triangulate(frame_current);
 }
 
 int Frontend::restart() {
@@ -80,13 +84,13 @@ int Frontend::restart() {
 // Use the Perspective-n-Point (PnP) algorithm to provide "perspective-from-3-points" (P3P). Estimates
 // the camera get_pose (t,r) that minimizes the reprojection error of 3D points onto the 2D image. Convert the
 // rotation vector (r) into a rotation matrix (R) with Rodrigues algorithm.
-void Frontend::estimate_pose(std::shared_ptr<Frame> frame_t0,
-                             std::shared_ptr<Frame> frame_t1,
+void Frontend::estimate_pose(std::shared_ptr<Frame> frame_previous,
+                             std::shared_ptr<Frame> frame_current,
                              const cv::Mat K)
 {
-    std::vector<cv::Point2f> points_2d = frame_t1->get_points_left();
+    std::vector<cv::Point2f> points_2d = frame_current->get_points_left();
     std::cout << "[INFO] Frontend::estimate_pose - points { 2D " << points_2d.size() << " }" << std::endl;
-    std::vector<cv::Point3f> points_3d = frame_t1->get_points_3d();
+    std::vector<cv::Point3f> points_3d = frame_current->get_points_3d();
     std::cout << "[INFO] Frontend::estimate_pose - points { 3D " << points_3d.size() << " }" << std::endl;
 
     cv::Mat inliers;
@@ -108,23 +112,23 @@ void Frontend::estimate_pose(std::shared_ptr<Frame> frame_t0,
 
     Sophus::SE3d T = Sophus::SE3d(SO3_R, SO3_t);
 
-    remove_outliers(frame_t1, inliers);
+    remove_outliers(frame_current, inliers);
 
     double distance = cv::norm(t);
     double angle = cv::norm(R);
     std::cout << "[INFO] Frontend::esimate_pose - relative motion = " << distance << " angle = " << angle << std::endl;
 
     bool is_keyframe = true;
-    Sophus::SE3d T_c_w = frame_t0->get_pose();
+    Sophus::SE3d T_c_w = frame_previous->get_pose();
     if (distance > 0.05 && distance < 5) {
-        frame_t1->is_keyframe_ = true;
+        frame_current->is_keyframe_ = true;
         T_c_w = T_c_w * T.inverse();
     } else {
-        frame_t1->is_keyframe_ = false;
+        frame_current->is_keyframe_ = false;
         std::cout << "[WARNING] get_pose not updated due to out-of-bounds scale value" << distance << std::endl;
     }
 
-    frame_t1->set_pose(T_c_w);
+    frame_current->set_pose(T_c_w);
 }
 
 void Frontend::triangulate(std::shared_ptr<Frame> frame) {

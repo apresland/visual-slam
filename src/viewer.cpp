@@ -66,12 +66,29 @@ void Viewer::display_tracking(const std::vector<cv::Point2f> &points_left_t0,
     cv::waitKey(1);
 }
 
-void Viewer::display_trajectory(Sophus::SE3d T_c_w, unsigned int true_pose_id) {
+void Viewer::display_trajectory(const std::shared_ptr<Frame> frame, unsigned int true_pose_id) {
 
+    Sophus::SE3d T_c_w = frame->get_pose();
     Eigen::Matrix3d rotation = T_c_w.rotationMatrix();
     Eigen::Vector3d translation = T_c_w.translation();
     int x = int(translation[0]) + 300;
     int y = int(translation[2]) + 100;
+    cv::Mat overlay;
+    trajectory_.copyTo(overlay);
+    for (auto &mappoint : frame->get_points_3d()) {
+
+        Eigen::Vector3d v3d(mappoint.x, mappoint.y, mappoint.z);
+        Eigen::Vector3d world = frame->get_pose() * v3d;
+
+        int mp_x = world[0] + 300;
+        int mp_y = world[2] + 100;
+
+        //int mp_x = mappoint.x + 300;
+        //int mp_y = mappoint.z + 100;
+
+        cv::circle(overlay, cv::Point(mp_x, mp_y) ,5, CV_RGB(126,126,126), 1);
+    }
+    cv::addWeighted(overlay, 0.05, trajectory_, 1 - 0.05, 0, trajectory_);
     cv::circle(trajectory_, cv::Point(x, y) ,1, CV_RGB(0,0,255), 2);
 
     // ground truth

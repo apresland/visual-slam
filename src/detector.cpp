@@ -9,14 +9,14 @@ static const auto keypoint_response_comparitor = [](cv::KeyPoint const& kp1, cv:
     return abs(kp1.response) > abs(kp2.response);
 };
 
-bool Detector::detect(std::shared_ptr<Frame> frame_t0, std::shared_ptr<Frame> frame_previous) {
+bool Detector::detect(std::shared_ptr<Frame> frame_current, std::shared_ptr<Frame> frame_previous) {
 
-    if(!frame_t0) return false;
+    if(!frame_current) return false;
 
     std::cout << "[INFO] Detector::detect - creating new keypoints" << std::endl;
 
-    NUMBER_GRID_CELL_COLS = std::ceil(static_cast<double>(frame_t0->image_left_.cols)/GRID_CELL_SIZE);
-    NUMBER_GRID_CELL_ROWS = std::ceil(static_cast<double >(frame_t0->image_left_.rows)/GRID_CELL_SIZE);
+    NUMBER_GRID_CELL_COLS = std::ceil(static_cast<double>(frame_current->image_left_.cols)/GRID_CELL_SIZE);
+    NUMBER_GRID_CELL_ROWS = std::ceil(static_cast<double >(frame_current->image_left_.rows)/GRID_CELL_SIZE);
     std::vector<bool> occupancy_grid(NUMBER_GRID_CELL_COLS*NUMBER_GRID_CELL_ROWS, false);
 
     // occupancy grid initialize with existing features
@@ -33,7 +33,7 @@ bool Detector::detect(std::shared_ptr<Frame> frame_t0, std::shared_ptr<Frame> fr
 
     // FAST keypoint detection and presort on quality
     std::vector<cv::KeyPoint> keypoints;
-    detector_->detect(frame_t0->image_left_, keypoints);
+    detector_->detect(frame_current->image_left_, keypoints);
 
     // sort detections by quality of response
     std::sort(keypoints.begin(), keypoints.end(), keypoint_response_comparitor);
@@ -46,11 +46,11 @@ bool Detector::detect(std::shared_ptr<Frame> frame_t0, std::shared_ptr<Frame> fr
         int y = keypoints[i].pt.y;
         int index = static_cast<int>(y/GRID_CELL_SIZE)*NUMBER_GRID_CELL_COLS + static_cast<int>(x/GRID_CELL_SIZE);
         if ( ! occupancy_grid.at(index)) {
-            frame_t0->features_left_.push_back(std::make_shared<Feature>(frame_t0, keypoints[i].pt));
+            frame_current->features_left_.push_back(std::make_shared<Feature>(frame_current, keypoints[i].pt));
             occupancy_grid.at(index) = true;
             ++new_feature_count;
         }
     }
 
-    std::cout << "[INFO] Detector::detected - keypoints: total { " << frame_t0->features_left_.size() <<  " : new " << new_feature_count << " }" << std::endl;
+    std::cout << "[INFO] Detector::detected - keypoints: total { " << frame_current->features_left_.size() <<  " : new " << new_feature_count << " }" << std::endl;
 }
