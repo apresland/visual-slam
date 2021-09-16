@@ -25,7 +25,6 @@ public:
     void set_backend(std::shared_ptr<Backend> backend) { backend_ = backend; }
     void set_viewer(std::shared_ptr<Viewer> viewer) {
         viewer_ = viewer;
-        matcher_->set_viewer(viewer_);
     }
     void set_matcher(std::shared_ptr<Matcher> matcher) { matcher_ = matcher; }
     void set_cameras(std::shared_ptr<Camera> camera_left, std::shared_ptr<Camera> camera_right) {

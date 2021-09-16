@@ -117,9 +117,6 @@ void Matcher::track(std::shared_ptr<Frame> frame_previous, std::shared_ptr<Frame
 
     calcOpticalFlowPyrLK(frame_previous->image_left_, frame_current->image_left_, frame_t0_points_left, frame_t1_points_left, status, err, window_size, 3, term_criteria, 0, 0.001);
 
-    std::vector<cv::Point2f> points_left_t0_visual;
-    std::vector<cv::Point2f> points_left_t1_visual;
-
     frame_current->features_left_.clear();
     for(int i=0; i < status.size(); i++) {
         if(status[i]) {
@@ -127,13 +124,8 @@ void Matcher::track(std::shared_ptr<Frame> frame_previous, std::shared_ptr<Frame
             std::shared_ptr<Feature> feature_t1 = std::make_shared<Feature>(frame_current, p2d_t1);
             feature_t1->landmark_ = frame_previous->features_left_[i]->landmark_;
             frame_current->features_left_.push_back(feature_t1);
-            points_left_t0_visual.push_back(frame_t0_points_left[i]);
-            points_left_t1_visual.push_back(frame_t1_points_left[i]);
         }
     }
 
-    if (viewer_) {
-        viewer_->display_tracking(points_left_t0_visual, points_left_t1_visual, frame_current->image_left_);
-    }
     std::cout << "[INFO] Matcher::track - tracked " << frame_current->features_left_.size() << " 2D points" << std::endl;
 }

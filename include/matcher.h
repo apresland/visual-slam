@@ -11,8 +11,6 @@ public:
     void match(std::shared_ptr<Frame> frame);
     void match(std::shared_ptr<Frame> frame_current, std::shared_ptr<Frame> frame_next);
     void track(std::shared_ptr<Frame> frame_previous, std::shared_ptr<Frame> frame_current);
-    void set_viewer(std::shared_ptr<Viewer> viewer) {viewer_ = viewer;}
-    std::shared_ptr<Viewer> viewer_;
 };
 
 #endif //VISUAL_SLAM_MATCHER_H

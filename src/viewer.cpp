@@ -17,6 +17,14 @@ void Viewer::init() {
     //cv::namedWindow(DISPARITY_WINDOW_NAME);
 }
 
+void Viewer::update(const std::shared_ptr<Frame> frame_previous,
+                    const std::shared_ptr<Frame> frame_current) {
+
+    display_features(frame_current);
+    display_tracking(frame_previous, frame_current);
+    display_trajectory(frame_current);
+}
+
 void Viewer::display_features(const std::shared_ptr<Frame> frame) {
 
     const cv::Mat &image = frame->image_left_;
@@ -43,9 +51,19 @@ void Viewer::display_features(const std::shared_ptr<Frame> frame) {
     cv::waitKey(1);
 }
 
-void Viewer::display_tracking(const std::vector<cv::Point2f> &points_left_t0,
-                              const std::vector<cv::Point2f> &points_left_t1,
-                              const cv::Mat &image_left_t1) {
+void Viewer::display_tracking(const std::shared_ptr<Frame> frame_previous,
+                              const std::shared_ptr<Frame> frame_current) {
+
+    const cv::Mat &image_left_t1 = frame_current->image_left_;
+    unsigned int frame_id = frame_current->id_;
+    std::vector<cv::Point2f> points_left_t0;
+    std::vector<cv::Point2f> points_left_t1;
+
+    for(int i=0; i < frame_current->features_left_.size(); i++) {
+        points_left_t0.push_back(frame_previous->features_left_[i]->point_2d_);
+        points_left_t1.push_back(frame_current->features_left_[i]->point_2d_);
+    }
+
     int radius = 2;
     cv::Mat vis;
     cv::cvtColor(image_left_t1, vis, cv::COLOR_GRAY2BGR, 3);
@@ -66,19 +84,20 @@ void Viewer::display_tracking(const std::vector<cv::Point2f> &points_left_t0,
     cv::waitKey(1);
 }
 
-void Viewer::display_trajectory(const std::shared_ptr<Frame> frame, unsigned int true_pose_id) {
+void Viewer::display_trajectory(const std::shared_ptr<Frame> frame_current) {
 
-    Sophus::SE3d T_c_w = frame->get_pose();
+    unsigned int true_pose_id = frame_current->id_;
+    Sophus::SE3d T_c_w = frame_current->get_pose();
     Eigen::Matrix3d rotation = T_c_w.rotationMatrix();
     Eigen::Vector3d translation = T_c_w.translation();
     int x = int(translation[0]) + 300;
     int y = int(translation[2]) + 100;
     cv::Mat overlay;
     trajectory_.copyTo(overlay);
-    for (auto &mappoint : frame->get_points_3d()) {
+    for (auto &mappoint : frame_current->get_points_3d()) {
 
         Eigen::Vector3d v3d(mappoint.x, mappoint.y, mappoint.z);
-        Eigen::Vector3d world = frame->get_pose() * v3d;
+        Eigen::Vector3d world = frame_current->get_pose() * v3d;
 
         int mp_x = world[0] + 300;
         int mp_y = world[2] + 100;

@@ -11,11 +11,12 @@ public:
     Viewer();
     void init();
     void load_poses();
-    void display_features(const std::shared_ptr<Frame> frame);
-    void display_tracking(const std::vector<cv::Point2f> &points_left_t0,
-                          const std::vector<cv::Point2f> &points_left_t1,
-                          const cv::Mat &image_left_t1);
-    void display_trajectory(const std::shared_ptr<Frame> frame, unsigned int true_pose_id);
+    void update(const std::shared_ptr<Frame> frame_previous,
+                const std::shared_ptr<Frame> frame_current);
+    void display_features(const std::shared_ptr<Frame> frame_current);
+    void display_tracking(const std::shared_ptr<Frame> frame_previous,
+                          const std::shared_ptr<Frame> frame_current);
+    void display_trajectory(const std::shared_ptr<Frame> frame_current);
 
 private:
     std::vector<cv::Mat> ground_truth_poses_;

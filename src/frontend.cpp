@@ -51,6 +51,11 @@ int Frontend::process(std::shared_ptr<Frame> frame_previous, std::shared_ptr<Fra
     matcher_->track(frame_previous, frame_current);
 
     // -----------------------------------------------------------------------------------------------------------------
+    // Visualization : update visualization with current estimated state
+    // -----------------------------------------------------------------------------------------------------------------
+    viewer_->update(frame_previous, frame_current);
+
+    // -----------------------------------------------------------------------------------------------------------------
     // Estimation : estimate current pose with PnP method
     // -----------------------------------------------------------------------------------------------------------------
     estimate_pose(frame_previous, frame_current, camera_left_->K());
@@ -74,12 +79,6 @@ int Frontend::process(std::shared_ptr<Frame> frame_previous, std::shared_ptr<Fra
     // Triangulation : triangulate 3D map points from new stereo matched 2D features
     // -----------------------------------------------------------------------------------------------------------------
     triangulate(frame_current);
-
-    // -----------------------------------------------------------------------------------------------------------------
-    // Visualization : update visualization with current estimated state
-    // -----------------------------------------------------------------------------------------------------------------
-    viewer_->display_features(frame_current);
-    viewer_->display_trajectory(frame_current, frame_id_);
 }
 
 int Frontend::restart() {

@@ -51,8 +51,6 @@ void System::Run() {
     frontend->set_backend(backend);
     viewer->init();
 
-    matcher->set_viewer(viewer);
-
     int index = 0;
     std::shared_ptr<Sequence::StereoPair> prev_element = nullptr;
     for (std::shared_ptr<Sequence::StereoPair> element : sequence_->elements_)
