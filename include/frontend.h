@@ -74,8 +74,9 @@ private:
     std::shared_ptr<Frame> frame_next_{nullptr};
     bool has_new_detections_{false};
     size_t feature_id_{0};
-    size_t landmark_id_{0};
     size_t frame_id_{0};
+
+    Sophus::SE3d relative_motion_;
 
     Status status_{INITIALIZING};
 };

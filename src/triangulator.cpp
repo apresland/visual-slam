@@ -22,12 +22,21 @@ void Triangulator::triangulate(std::shared_ptr<Frame> frame) {
     int num_predefined = 0;
     std::cout << "[INFO] Triangulator::triangulate - defining " << points3D.rows << " mappoints" << std::endl;
     for(int i=0; i< points3D.rows; ++i) {
-        if ( frame->features_left_[i]->landmark_ ) num_predefined++;
-        cv::Point3f p3d = *points3D.ptr<cv::Point3f>(i);
-        std::shared_ptr<MapPoint> map_point = std::make_shared<MapPoint>();
-        map_point->point_3d_ = p3d;
-        frame->features_left_[i]->landmark_ = map_point;
-        frame->features_right_[i]->landmark_ = map_point;
+        cv::Point3f point_3d = *points3D.ptr<cv::Point3f>(i);
+        if ( frame->features_left_[i]->landmark_ )
+        {
+            frame->features_left_[i]->landmark_->point_3d_ = point_3d;
+            frame->features_left_[i]->landmark_->add_observation(frame->features_left_[i]);
+            num_predefined++;
+        } else {
+            std::shared_ptr<MapPoint> map_point = std::make_shared<MapPoint>();
+            map_point->point_3d_ = point_3d;
+            map_point->id_ = landmark_id_;
+            map_point->add_observation(frame->features_left_[i]);
+            frame->features_left_[i]->landmark_ = map_point;
+            map_->insert_landmark(map_point);
+            landmark_id_++;
+        }
     }
 
     std::cout << "[INFO] Triangulator::triangulate - " << num_predefined << " predefined mappoints "

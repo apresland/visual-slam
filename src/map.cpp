@@ -12,13 +12,13 @@ void Map::insert_keyframe(std::shared_ptr<Frame> keyframe) {
     }
 }
 
-void Map::insert_landmark(MapPoint landmark) {
-    if (landmarks_.find(landmark.id_) == landmarks_.end()) {
-        landmarks_.insert( LandmarkMapType::value_type(landmark.id_, landmark));
-        active_landmarks_.insert(LandmarkMapType::value_type(landmark.id_, landmark));
+void Map::insert_landmark(std::shared_ptr<MapPoint> landmark) {
+    if (landmarks_.find(landmark->id_) == landmarks_.end()) {
+        landmarks_.insert( LandmarksType::value_type(landmark->id_, landmark));
+        active_landmarks_.insert(LandmarksType::value_type(landmark->id_, landmark));
     } else {
-        landmarks_.at(landmark.id_) = landmark;
-        active_landmarks_.at(landmark.id_) = landmark;
+        landmarks_.at(landmark->id_) = landmark;
+        active_landmarks_.at(landmark->id_) = landmark;
     }
 }
 
@@ -26,7 +26,7 @@ std::unordered_map<unsigned long, std::shared_ptr<Frame>> Map::keyframes() {
     return keyframes_;
 }
 
-Map::LandmarkMapType Map::landmarks() {
+Map::LandmarksType Map::landmarks() {
     return landmarks_;
 }
 

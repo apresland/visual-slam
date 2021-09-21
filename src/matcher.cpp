@@ -39,7 +39,8 @@ void Matcher::match(std::shared_ptr<Frame> frame) {
 
     frame->features_right_.clear();
     for ( auto &pt : frame_t0_points_right ) {
-        frame->features_right_.push_back(std::make_shared<Feature>(frame, pt));
+        std::shared_ptr<Feature> feature = std::make_shared<Feature>(frame, pt);
+        frame->features_right_.push_back(feature);
     }
 }
 

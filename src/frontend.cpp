@@ -36,15 +36,6 @@ int Frontend::initialize(std::shared_ptr<Frame> frame) {
     detector_.detect(frame, nullptr);
     matcher_->match(frame);
     triangulator_->triangulate(frame);
-    for (auto &f : frame->features_left_)
-    {
-        auto & p3d = f->landmark_->point_3d_;
-        Eigen::Vector3d v3d(p3d.x, p3d.y, p3d.z);
-        v3d = frame->get_pose() * v3d;
-        p3d.x = v3d[0];
-        p3d.y = v3d[1];
-        p3d.z = v3d[2];
-    }
     frame->is_keyframe_ = true;
     map_->insert_keyframe(frame);
     status_ = TRACKING;
@@ -53,6 +44,7 @@ int Frontend::initialize(std::shared_ptr<Frame> frame) {
 int Frontend::process(std::shared_ptr<Frame> frame_previous, std::shared_ptr<Frame> frame_current, std::shared_ptr<Frame> frame_next) {
 
     if ( ! frame_previous || ! frame_current || ! frame_next) return -1;
+
 
     // -----------------------------------------------------------------------------------------------------------------
     // Tracking : track features from previous frame using KLT method
@@ -67,19 +59,21 @@ int Frontend::process(std::shared_ptr<Frame> frame_previous, std::shared_ptr<Fra
     // -----------------------------------------------------------------------------------------------------------------
     // Landmarks : transform triangulated features (camara frame) into world frame ready for next iteration
     // -----------------------------------------------------------------------------------------------------------------
-    for (auto &f : frame_current->features_left_)
+    for ( auto &feature : frame_current->features_left_ )
     {
-        auto & p3d = f->landmark_->point_3d_;
+        auto & p3d = feature->landmark_->point_3d_;
         Eigen::Vector3d v3d(p3d.x, p3d.y, p3d.z);
-        v3d = frame_previous->get_pose() * v3d;
-        p3d.x = v3d[0];
-        p3d.y = v3d[1];
-        p3d.z = v3d[2];
+        v3d = frame_current->get_pose() * v3d;
+        feature->landmark_->point_3d_.x = v3d[0];
+        feature->landmark_->point_3d_.y = v3d[1];
+        feature->landmark_->point_3d_.z = v3d[2];
     }
 
-    if(0 != frame_current->id_) {
+    if( 0 != frame_current->id_ ) {
         insert_keyframe(frame_current);
     }
+
+    //backend_->update_map();
 
     // -----------------------------------------------------------------------------------------------------------------
     // Visualization : update visualization with current estimated state
@@ -89,7 +83,7 @@ int Frontend::process(std::shared_ptr<Frame> frame_previous, std::shared_ptr<Fra
     // -----------------------------------------------------------------------------------------------------------------
     // Detection : detect new features with FAST and bucketing
     // -----------------------------------------------------------------------------------------------------------------
-    if (frame_id_ % 5 == 0) {
+    if ( frame_id_ % 5 == 0 ) {
         detector_.detect(frame_current, frame_previous);
     }
 

@@ -39,10 +39,12 @@ void Estimation::estimate(std::shared_ptr<Frame> frame_previous,
     double angle = cv::norm(R);
     std::cout << "[INFO] Frontend::esimate_pose - relative motion = " << distance << " angle = " << angle << std::endl;
 
+    // Transform World-to-Camera
     Sophus::SE3d T_c_w = frame_previous->get_pose();
     if (distance > 0.05 && distance < 5) {
         frame_current->is_keyframe_ = true;
         T_c_w = T_c_w * T.inverse();
+        //T_c_w = T;
     } else {
         frame_current->is_keyframe_ = false;
         std::cout << "[WARNING] get_pose not updated due to out-of-bounds scale value" << distance << std::endl;

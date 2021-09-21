@@ -9,15 +9,20 @@ void Backend::execute() {
     while (running_.load()) {
         std::unique_lock<std::mutex> lock(data_mutex_);
         map_update_.wait(lock);
-        std::unordered_map<unsigned long, std::shared_ptr<Frame>> active_keyframes = map_->active_keyframes_;
-        std::unordered_map<unsigned long, MapPoint> active_landmarks = map_->active_landmarks_;
+        Map::KeyframesType active_keyframes = map_->active_keyframes_;
+        Map::LandmarksType active_landmarks = map_->active_landmarks_;
         optimize(active_keyframes, active_landmarks);
     }
 
 }
 
-void Backend::optimize(std::unordered_map<unsigned long, std::shared_ptr<Frame>> keyframes,
-              std::unordered_map<unsigned long, MapPoint> landmarks) {
+void Backend::update_map() {
+    std::unique_lock<std::mutex> lock(data_mutex_);
+    map_update_.notify_one();
+}
+
+void Backend::optimize(Map::KeyframesType keyframes,
+              Map::LandmarksType landmarks) {
     optimization_.compute(keyframes, landmarks, camera_left_->K());
 }
 

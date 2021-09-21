@@ -71,14 +71,6 @@ EXPOSE 22 7777
 RUN useradd -ms /bin/bash dev
 RUN echo 'dev:dev' | chpasswd
 
-# generate pangolin
-#WORKDIR /home/dev
-#RUN git clone https://github.com/stevenlovegrove/Pangolin.git
-#WORKDIR /home/dev/Pangolin/build
-#RUN cmake ..
-#RUN make
-#RUN make install
-
 # install opencv
 WORKDIR /home/dev/
 RUN git clone https://github.com/opencv/opencv.git
@@ -120,6 +112,8 @@ RUN make install
 # install g2o
 WORKDIR /home/dev/
 RUN git clone https://github.com/RainerKuemmerle/g2o
+WORKDIR /home/dev/g2o
+RUN git checkout 20201223_git
 WORKDIR /home/dev/g2o/build
 RUN cmake -std=c++14 ..
 RUN make

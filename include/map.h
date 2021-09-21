@@ -11,18 +11,19 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
     Map(){}
 
-    typedef std::unordered_map<unsigned long, MapPoint> LandmarkMapType;
+    typedef std::unordered_map<unsigned long, std::shared_ptr<MapPoint>> LandmarksType;
+    typedef std::unordered_map<unsigned long, std::shared_ptr<Frame>> KeyframesType;
 
     void insert_keyframe(std::shared_ptr<Frame> keyframe);
-    void insert_landmark(MapPoint landmark);
+    void insert_landmark(std::shared_ptr<MapPoint> landmark);
 
     std::unordered_map<unsigned long, std::shared_ptr<Frame>> keyframes();
-    LandmarkMapType landmarks();
+    LandmarksType landmarks();
 
-    LandmarkMapType landmarks_;
-    LandmarkMapType active_landmarks_;
-    std::unordered_map<unsigned long, std::shared_ptr<Frame>> keyframes_;
-    std::unordered_map<unsigned long, std::shared_ptr<Frame>> active_keyframes_;
+    LandmarksType landmarks_;
+    LandmarksType active_landmarks_;
+    KeyframesType keyframes_;
+    KeyframesType active_keyframes_;
     std::shared_ptr<Frame> current_frame_ {nullptr};
 
     // settings

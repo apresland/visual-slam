@@ -22,8 +22,10 @@ public:
 
     void execute();
     void terminate();
-    void optimize(std::unordered_map<unsigned long, std::shared_ptr<Frame>> keyframes,
-                  std::unordered_map<unsigned long, MapPoint> landmarks);
+    void optimize(Map::KeyframesType keyframes,
+                  Map::LandmarksType landmarks);
+
+    void update_map();
 
 private:
     std::shared_ptr<Camera> camera_left_{nullptr};
