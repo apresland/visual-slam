@@ -11,7 +11,7 @@ public:
     Triangulator(std::shared_ptr<Camera> camera_left, std::shared_ptr<Camera> camera_right)
         : camera_left_(camera_left), camera_right_(camera_right) {}
     void triangulate(std::shared_ptr<Frame> frame);
-    void set_map(std::shared_ptr<Map> map) {map_ = map;}
+    void setMap(std::shared_ptr<Map> map) { map_ = map;}
 
 private:
     std::shared_ptr<Camera> camera_left_{nullptr};

@@ -44,21 +44,21 @@ void System::Run() {
     std::shared_ptr<Map> map = std::make_shared<Map>();
 
     std::shared_ptr<Triangulator> triangulator = std::make_shared<Triangulator>(cameras_[0], cameras_[1]);
-    triangulator->set_map(map);
+    triangulator->setMap(map);
 
     std::shared_ptr<Backend> backend = std::make_shared<Backend>();
-    backend->set_cameras(cameras_[0], cameras_[1]);
-    backend->set_map(map);
+    backend->setCameras(cameras_[0], cameras_[1]);
+    backend->setMap(map);
 
     std::shared_ptr<Frontend> frontend = std::make_shared<Frontend>();
-    frontend->set_cameras(cameras_[0], cameras_[1]);
-    frontend->set_map(map);
-    frontend->set_matcher(matcher);
-    frontend->set_tracker(tracker);
-    frontend->set_triangulator(triangulator);
-    frontend->set_estimation(estimation);
-    frontend->set_viewer(viewer);
-    frontend->set_backend(backend);
+    frontend->setCameras(cameras_[0], cameras_[1]);
+    frontend->setMap(map);
+    frontend->setMatcher(matcher);
+    frontend->setTracker(tracker);
+    frontend->setTriangulator(triangulator);
+    frontend->setEstimation(estimation);
+    frontend->setViewer(viewer);
+    frontend->setBackend(backend);
     viewer->init();
 
     int index = 0;

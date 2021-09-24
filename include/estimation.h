@@ -11,7 +11,7 @@ public:
     void estimate(std::shared_ptr<Frame> frame_previous,
                        std::shared_ptr<Frame> frame_current,
                        const cv::Mat K);
-    void remove_outliers(std::shared_ptr<Frame> frame, cv::Mat inliers);
+    void removeOutliers(std::shared_ptr<Frame> frame, cv::Mat inliers);
 };
 
 #endif //VISUAL_SLAM_POSE_ESTIMATION_H

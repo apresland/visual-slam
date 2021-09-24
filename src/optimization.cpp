@@ -18,7 +18,7 @@ void Optimization::optimize(Map::KeyframesType unordered_keyframes,
 
     std::map<size_t, Sophus::SE3d> ceres_poses;
     for(const auto& keyframe : keyframes) {
-        ceres_poses[keyframe.second->id_] = keyframe.second->get_pose().inverse();
+        ceres_poses[keyframe.second->id_] = keyframe.second->getPose().inverse();
         problem.AddParameterBlock(ceres_poses[keyframe.second->id_].data(), Sophus::SE3d::num_parameters, se3_parameterization);
     }
 
@@ -75,7 +75,7 @@ void Optimization::optimize(Map::KeyframesType unordered_keyframes,
 
     for(auto& keyframe : keyframes) {
         const auto ceres_pose = ceres_poses[keyframe.second->id_];
-        keyframe.second->set_pose(ceres_pose.inverse());
+        keyframe.second->setPose(ceres_pose.inverse());
     }
 
     std::cout << "Optimization::optimize - EXIT" << std::endl;

@@ -24,29 +24,29 @@ public:
 public:
     Frontend();
     void update(std::shared_ptr<Frame> frame);
-    void set_map(std::shared_ptr<Map> map) {
+    void setMap(std::shared_ptr<Map> map) {
         map_ = map;
     }
-    void set_backend(std::shared_ptr<Backend> backend) {
+    void setBackend(std::shared_ptr<Backend> backend) {
         backend_ = backend;
     }
-    void set_viewer(std::shared_ptr<Viewer> viewer) {
+    void setViewer(std::shared_ptr<Viewer> viewer) {
         viewer_ = viewer;
     }
-    void set_matcher(std::shared_ptr<Matcher> matcher) {
+    void setMatcher(std::shared_ptr<Matcher> matcher) {
         matcher_ = matcher;
     }
-    void set_tracker(std::shared_ptr<Tracker> tracker) {
+    void setTracker(std::shared_ptr<Tracker> tracker) {
         tracker_ = tracker;
     }
-    void set_triangulator(std::shared_ptr<Triangulator> triangulator) {
+    void setTriangulator(std::shared_ptr<Triangulator> triangulator) {
         triangulator_ = triangulator;
     }
-    void set_estimation(std::shared_ptr<Estimation> estimation) {
+    void setEstimation(std::shared_ptr<Estimation> estimation) {
         estimation_ = estimation;
     }
 
-    void set_cameras(std::shared_ptr<Camera> camera_left, std::shared_ptr<Camera> camera_right) {
+    void setCameras(std::shared_ptr<Camera> camera_left, std::shared_ptr<Camera> camera_right) {
         camera_left_ = camera_left;
         camera_right_ = camera_right;
     }
@@ -56,8 +56,8 @@ private:
     int process(std::shared_ptr<Frame> frame_previous, std::shared_ptr<Frame> frame_current, std::shared_ptr<Frame> frame_next);
     int restart();
 
-    void initialize_map(std::shared_ptr<Frame> frame);
-    void insert_keyframe(std::shared_ptr<Frame> frame);
+    void initializeMap(std::shared_ptr<Frame> frame);
+    void insertKeyframe(std::shared_ptr<Frame> frame);
 
     Detector detector_;
     std::shared_ptr<Matcher> matcher_{};

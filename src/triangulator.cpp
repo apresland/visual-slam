@@ -4,8 +4,8 @@
 
 void Triangulator::triangulate(std::shared_ptr<Frame> frame) {
 
-    std::vector<cv::Point2f>  matches_2d_left = frame->get_points_left();
-    std::vector<cv::Point2f>  matches_2d_right = frame->get_points_right();
+    std::vector<cv::Point2f>  matches_2d_left = frame->getPointsLeft();
+    std::vector<cv::Point2f>  matches_2d_right = frame->getPointsRight();
 
     std::cout << "[INFO] Triangulator::triangulate - input points 2D { L"
               << matches_2d_left.size() << " : R"
@@ -26,15 +26,15 @@ void Triangulator::triangulate(std::shared_ptr<Frame> frame) {
         if ( frame->features_left_[i]->landmark_ )
         {
             frame->features_left_[i]->landmark_->point_3d_ = point_3d;
-            frame->features_left_[i]->landmark_->add_observation(frame->features_left_[i]);
+            frame->features_left_[i]->landmark_->addObservation(frame->features_left_[i]);
             num_predefined++;
         } else {
             std::shared_ptr<MapPoint> map_point = std::make_shared<MapPoint>();
             map_point->point_3d_ = point_3d;
             map_point->id_ = landmark_id_;
-            map_point->add_observation(frame->features_left_[i]);
+            map_point->addObservation(frame->features_left_[i]);
             frame->features_left_[i]->landmark_ = map_point;
-            map_->insert_landmark(map_point);
+            map_->insertLandmark(map_point);
             landmark_id_++;
         }
     }

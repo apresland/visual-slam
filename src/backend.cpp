@@ -17,10 +17,10 @@ void Backend::execute() {
     }
 }
 
-void Backend::update_map() {
+void Backend::updateMap() {
     std::unique_lock<std::mutex> lock(data_mutex_);
     map_update_.notify_one();
-    std::cout << "[INFO] Backend::update_map - issued update notification"<< std::endl;
+    std::cout << "[INFO] Backend::updateMap - issued update notification"<< std::endl;
 }
 
 void Backend::optimize(Map::KeyframesType keyframes,

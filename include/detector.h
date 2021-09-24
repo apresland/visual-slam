@@ -13,7 +13,7 @@ public:
     Detector();
     bool detect(std::shared_ptr<Frame> frame_current, std::shared_ptr<Frame> frame_previous);
 private:
-    bool position_in_grid(const cv::Mat &image, cv::Point2f &point, int &grid_pos_x, int &grid_pos_y);
+    bool positionInGrid(const cv::Mat &image, cv::Point2f &point, int &grid_pos_x, int &grid_pos_y);
     cv::Ptr<cv::FeatureDetector> detector_;
     int NUMBER_GRID_CELL_COLS;
     int NUMBER_GRID_CELL_ROWS;

@@ -1,6 +1,6 @@
 #include "mappoint.h"
 
-void MapPoint::remove_observation(std::shared_ptr<Feature> feat) {
+void MapPoint::removeObservation(std::shared_ptr<Feature> feat) {
     std::unique_lock<std::mutex> lck(mutex_);
     for (auto iter = observations_.begin(); iter != observations_.end();
          iter++) {

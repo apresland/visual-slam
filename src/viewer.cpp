@@ -20,15 +20,15 @@ void Viewer::init() {
 void Viewer::update(const std::shared_ptr<Frame> frame_previous,
                     const std::shared_ptr<Frame> frame_current) {
 
-    display_features(frame_current);
-    display_tracking(frame_previous, frame_current);
-    display_trajectory(frame_current);
+    displayFeatures(frame_current);
+    displayTracking(frame_previous, frame_current);
+    displayTrajectory(frame_current);
 }
 
-void Viewer::display_features(const std::shared_ptr<Frame> frame) {
+void Viewer::displayFeatures(const std::shared_ptr<Frame> frame_current) {
 
-    const cv::Mat &image = frame->image_left_;
-    std::vector<cv::Point2f> points_left_t1 = frame->get_points_left();
+    const cv::Mat &image = frame_current->image_left_;
+    std::vector<cv::Point2f> points_left_t1 = frame_current->getPointsLeft();
 
     cv::Scalar color_g(0, 255, 0), color_b(255, 0, 0), color_r(0, 0, 255);
 
@@ -51,8 +51,8 @@ void Viewer::display_features(const std::shared_ptr<Frame> frame) {
     cv::waitKey(1);
 }
 
-void Viewer::display_tracking(const std::shared_ptr<Frame> frame_previous,
-                              const std::shared_ptr<Frame> frame_current) {
+void Viewer::displayTracking(const std::shared_ptr<Frame> frame_previous,
+                             const std::shared_ptr<Frame> frame_current) {
 
     const cv::Mat &image_left_t1 = frame_current->image_left_;
     unsigned int frame_id = frame_current->id_;
@@ -84,7 +84,7 @@ void Viewer::display_tracking(const std::shared_ptr<Frame> frame_previous,
     cv::waitKey(1);
 }
 
-void Viewer::display_trajectory(const std::shared_ptr<Frame> frame_current) {
+void Viewer::displayTrajectory(const std::shared_ptr<Frame> frame_current) {
 
     if ( ! frame_previous) {
         frame_previous = frame_current;
@@ -92,7 +92,7 @@ void Viewer::display_trajectory(const std::shared_ptr<Frame> frame_current) {
     }
 
     unsigned int true_pose_id = frame_current->id_;
-    Sophus::SE3d T_c_w = frame_current->get_pose();
+    Sophus::SE3d T_c_w = frame_current->getPose();
     Sophus::SE3d T_w_c = T_c_w.inverse();
     Eigen::Matrix3d rotation = T_c_w.rotationMatrix();
     Eigen::Vector3d translation = T_c_w.translation();
@@ -100,9 +100,9 @@ void Viewer::display_trajectory(const std::shared_ptr<Frame> frame_current) {
     int y = int(translation[2]) + 100;
     cv::Mat overlay;
     trajectory_.copyTo(overlay);
-    for (auto &mappoint : frame_current->get_points_3d()) {
+    for (auto &mappoint : frame_current->getPoints3D()) {
         Eigen::Vector3d v3d(mappoint.x, mappoint.y, mappoint.z);
-        //v3d = frame_current->get_pose() * v3d;
+        //v3d = frame_current->getPose() * v3d;
         int mp_x = v3d.x() + 300;
         int mp_y = v3d.z() + 100;
         cv::circle(overlay, cv::Point(mp_x, mp_y) ,1, CV_RGB(126,126,126), 1);
@@ -122,7 +122,7 @@ void Viewer::display_trajectory(const std::shared_ptr<Frame> frame_current) {
     cv::waitKey(1);
 }
 
-void Viewer::load_poses() {
+void Viewer::loadGroundTruthPoses() {
 
     std::string filepath = "/data/kitti/odometry/dataset/poses/";
     const std::string filename = filepath + "/00.txt";

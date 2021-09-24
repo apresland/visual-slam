@@ -1,7 +1,7 @@
 #include <utility>
 #include "map.h"
 
-void Map::insert_keyframe(std::shared_ptr<Frame> keyframe) {
+void Map::insertKeyframe(std::shared_ptr<Frame> keyframe) {
     current_frame_ = keyframe;
     if (keyframes_.find(keyframe->id_) == keyframes_.end()) {
         keyframes_.insert(make_pair(keyframe->id_, keyframe));
@@ -11,11 +11,11 @@ void Map::insert_keyframe(std::shared_ptr<Frame> keyframe) {
         active_keyframes_[keyframe->id_] = keyframe;
     }
     if (active_keyframes_.size() > num_active_keyframes_) {
-        remove_old_keyframe();
+        removeKeyframe();
     }
 }
 
-void Map::insert_landmark(std::shared_ptr<MapPoint> landmark) {
+void Map::insertLandmark(std::shared_ptr<MapPoint> landmark) {
     if (landmarks_.find(landmark->id_) == landmarks_.end()) {
         landmarks_.insert( LandmarksType::value_type(landmark->id_, landmark));
         active_landmarks_.insert(LandmarksType::value_type(landmark->id_, landmark));
@@ -33,14 +33,14 @@ Map::LandmarksType Map::landmarks() {
     return landmarks_;
 }
 
-void Map::remove_old_keyframe() {
+void Map::removeKeyframe() {
     if (current_frame_ == nullptr) return;
     double max_dis = 0, min_dis = 9999;
     double max_kf_id = 0, min_kf_id = 0;
-    auto Twc = current_frame_->get_pose().inverse();
+    auto Twc = current_frame_->getPose().inverse();
     for (auto& kf : active_keyframes_) {
         if (kf.second == current_frame_) continue;
-        auto dis = (kf.second->get_pose() * Twc).log().norm();
+        auto dis = (kf.second->getPose() * Twc).log().norm();
         if (dis > max_dis) {
             max_dis = dis;
             max_kf_id = kf.first;

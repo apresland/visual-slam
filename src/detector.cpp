@@ -21,7 +21,7 @@ bool Detector::detect(std::shared_ptr<Frame> frame_current, std::shared_ptr<Fram
 
     // occupancy grid initialize with existing features
     if (frame_previous) {
-        std::vector<cv::Point2f> previous_keypoints = frame_previous->get_points_left();
+        std::vector<cv::Point2f> previous_keypoints = frame_previous->getPointsLeft();
         for (int i =0; i < previous_keypoints.size(); i++)
         {
             int x = previous_keypoints[i].x;

@@ -12,30 +12,30 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
     Frame() {};
 
-    Sophus::SE3d get_pose() {
+    Sophus::SE3d getPose() {
         std::unique_lock<std::mutex> lck(mutex_);
         return pose_;
     }
 
-    void set_pose(const Sophus::SE3d &pose) {
+    void setPose(const Sophus::SE3d &pose) {
         std::unique_lock<std::mutex> lck(mutex_);
         pose_ = pose;
     }
 
-    std::vector<std::shared_ptr<MapPoint>> get_landmarks(){
+    std::vector<std::shared_ptr<MapPoint>> getLandmarks(){
         std::unique_lock<std::mutex> lck(mutex_);
         return landmarks_;
     }
 
-    std::vector<cv::Point2f> get_points_left() {
+    std::vector<cv::Point2f> getPointsLeft() {
         return features2points(features_left_);
     }
 
-    std::vector<cv::Point2f> get_points_right() {
+    std::vector<cv::Point2f> getPointsRight() {
         return features2points(features_right_);
     }
 
-    std::vector<cv::Point3f> get_points_3d() {
+    std::vector<cv::Point3f> getPoints3D() {
         return features2points3d(features_left_);
     }
 

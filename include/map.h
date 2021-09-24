@@ -14,9 +14,9 @@ public:
     typedef std::unordered_map<unsigned long, std::shared_ptr<MapPoint>> LandmarksType;
     typedef std::unordered_map<unsigned long, std::shared_ptr<Frame>> KeyframesType;
 
-    void insert_keyframe(std::shared_ptr<Frame> keyframe);
-    void insert_landmark(std::shared_ptr<MapPoint> landmark);
-    void remove_old_keyframe();
+    void insertKeyframe(std::shared_ptr<Frame> keyframe);
+    void insertLandmark(std::shared_ptr<MapPoint> landmark);
+    void removeKeyframe();
     void clean_map();
 
     std::unordered_map<unsigned long, std::shared_ptr<Frame>> keyframes();

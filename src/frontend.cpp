@@ -32,12 +32,12 @@ void Frontend::update(std::shared_ptr<Frame> frame) {;
 }
 
 int Frontend::initialize(std::shared_ptr<Frame> frame) {
-    viewer_->load_poses();
+    viewer_->loadGroundTruthPoses();
     detector_.detect(frame, nullptr);
     matcher_->match(frame);
     triangulator_->triangulate(frame);
     frame->is_keyframe_ = true;
-    map_->insert_keyframe(frame);
+    map_->insertKeyframe(frame);
     status_ = TRACKING;
 }
 
@@ -62,7 +62,7 @@ int Frontend::process(std::shared_ptr<Frame> frame_previous, std::shared_ptr<Fra
     {
         auto & p3d = feature->landmark_->point_3d_;
         Eigen::Vector3d v3d(p3d.x, p3d.y, p3d.z);
-        v3d = frame_current->get_pose() * v3d;
+        v3d = frame_current->getPose() * v3d;
         feature->landmark_->point_3d_.x = v3d[0];
         feature->landmark_->point_3d_.y = v3d[1];
         feature->landmark_->point_3d_.z = v3d[2];
@@ -70,7 +70,7 @@ int Frontend::process(std::shared_ptr<Frame> frame_previous, std::shared_ptr<Fra
     }
 
     if ( 0 != frame_current->id_ && frame_current->id_ % 5 == 0) {
-        insert_keyframe(frame_current);
+        insertKeyframe(frame_current);
     }
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -82,7 +82,7 @@ int Frontend::process(std::shared_ptr<Frame> frame_previous, std::shared_ptr<Fra
     // Detection : detect new features with FAST and bucketing
     // -----------------------------------------------------------------------------------------------------------------
     if ( frame_id_ % 5 == 0 ) {
-        backend_->update_map();
+        backend_->updateMap();
         detector_.detect(frame_current, frame_previous);
     }
 
@@ -102,12 +102,12 @@ int Frontend::restart() {
 }
 
 
-void Frontend::insert_keyframe(std::shared_ptr<Frame> frame) {
+void Frontend::insertKeyframe(std::shared_ptr<Frame> frame) {
 
     if ( ! frame->is_keyframe_) {
         return;
     }
 
     std::cout << "[INFO] Frontend::insert_frame {" << frame->id_ << "} - input features " << frame->features_left_.size() << std::endl;
-    map_->insert_keyframe(frame);
+    map_->insertKeyframe(frame);
 }

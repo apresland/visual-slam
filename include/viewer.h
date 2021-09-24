@@ -10,13 +10,13 @@ class Viewer {
 public:
     Viewer();
     void init();
-    void load_poses();
+    void loadGroundTruthPoses();
     void update(const std::shared_ptr<Frame> frame_previous,
                 const std::shared_ptr<Frame> frame_current);
-    void display_features(const std::shared_ptr<Frame> frame_current);
-    void display_tracking(const std::shared_ptr<Frame> frame_previous,
-                          const std::shared_ptr<Frame> frame_current);
-    void display_trajectory(const std::shared_ptr<Frame> frame_current);
+    void displayFeatures(const std::shared_ptr<Frame> frame_current);
+    void displayTracking(const std::shared_ptr<Frame> frame_previous,
+                         const std::shared_ptr<Frame> frame_current);
+    void displayTrajectory(const std::shared_ptr<Frame> frame_current);
 
 private:
     std::vector<cv::Mat> ground_truth_poses_;

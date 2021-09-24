@@ -7,8 +7,8 @@
 void Matcher::match(std::shared_ptr<Frame> frame) {
     std::cout << "[INFO] Matcher::match_right - " << frame->features_left_.size() << " 2D points" << std::endl;
 
-    std::vector<cv::Point2f> frame_t0_points_left = frame->get_points_left();
-    std::vector<cv::Point2f> frame_t0_points_right = frame->get_points_right();
+    std::vector<cv::Point2f> frame_t0_points_left = frame->getPointsLeft();
+    std::vector<cv::Point2f> frame_t0_points_right = frame->getPointsRight();
 
     std::vector<float> err;
     std::vector<uchar> status;
@@ -48,11 +48,11 @@ void Matcher::match(std::shared_ptr<Frame> frame_current, std::shared_ptr<Frame>
 
     std::cout << "[INFO] Matcher::match - matching " << frame_current->features_left_.size() << " 2D points" << std::endl;
 
-    std::vector<cv::Point2f> frame_t0_points_left = frame_current->get_points_left();
-    std::vector<cv::Point2f> frame_t0_points_right = frame_current->get_points_right();
+    std::vector<cv::Point2f> frame_t0_points_left = frame_current->getPointsLeft();
+    std::vector<cv::Point2f> frame_t0_points_right = frame_current->getPointsRight();
 
-    std::vector<cv::Point2f> frame_t1_points_left = frame_next->get_points_left();
-    std::vector<cv::Point2f> frame_t1_points_right = frame_next->get_points_right();
+    std::vector<cv::Point2f> frame_t1_points_left = frame_next->getPointsLeft();
+    std::vector<cv::Point2f> frame_t1_points_right = frame_next->getPointsRight();
 
     std::vector<float> err;
     cv::Size window_size=cv::Size(21,21);

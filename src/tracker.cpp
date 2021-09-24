@@ -7,8 +7,8 @@
 void Tracker::track(std::shared_ptr<Frame> frame_previous, std::shared_ptr<Frame> frame_current) {
     std::cout << "[INFO] Tracker::track - tracking " << frame_previous->features_left_.size() << " 2D points" << std::endl;
 
-    std::vector<cv::Point2f> frame_t0_points_2d_left = frame_previous->get_points_left();
-    std::vector<cv::Point2f> frame_t1_points_2d_left = frame_previous->get_points_left();
+    std::vector<cv::Point2f> frame_t0_points_2d_left = frame_previous->getPointsLeft();
+    std::vector<cv::Point2f> frame_t1_points_2d_left = frame_previous->getPointsLeft();
 
     std::vector<float> err;
     cv::Size window_size=cv::Size(21,21);

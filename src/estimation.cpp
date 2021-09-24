@@ -3,15 +3,15 @@
 
 // 3D-to-2D: Motion from 3D structure and 2D image feature correspondence.
 // Use the Perspective-n-Point (PnP) algorithm to provide "perspective-from-3-points" (P3P). Estimates
-// the camera get_pose (t,r) that minimizes the reprojection error of 3D points onto the 2D image. Convert the
+// the camera getPose (t,r) that minimizes the reprojection error of 3D points onto the 2D image. Convert the
 // rotation vector (r) into a rotation matrix (R) with Rodrigues algorithm.
 void Estimation::estimate(std::shared_ptr<Frame> frame_previous,
                           std::shared_ptr<Frame> frame_current,
                           const cv::Mat K)
 {
-    std::vector<cv::Point2f> points_2d = frame_current->get_points_left();
+    std::vector<cv::Point2f> points_2d = frame_current->getPointsLeft();
     std::cout << "[INFO] Frontend::estimate_pose - points { 2D " << points_2d.size() << " }" << std::endl;
-    std::vector<cv::Point3f> points_3d = frame_current->get_points_3d();
+    std::vector<cv::Point3f> points_3d = frame_current->getPoints3D();
     std::cout << "[INFO] Frontend::estimate_pose - points { 3D " << points_3d.size() << " }" << std::endl;
 
     cv::Mat inliers;
@@ -33,26 +33,26 @@ void Estimation::estimate(std::shared_ptr<Frame> frame_previous,
 
     Sophus::SE3d T = Sophus::SE3d(SO3_R, SO3_t);
 
-    remove_outliers(frame_current, inliers);
+    removeOutliers(frame_current, inliers);
 
     double angle = T.rotationMatrix().norm();
     double distance = T.translation().norm();
     std::cout << "[INFO] Frontend::esimate_pose - relative motion = " << distance << " angle = " << angle << std::endl;
 
     // Transform World-to-Camera
-    Sophus::SE3d T_c_w = frame_previous->get_pose();
+    Sophus::SE3d T_c_w = frame_previous->getPose();
     if (distance > 0.05 && distance < 5) {
         frame_current->is_keyframe_ = true;
         T_c_w = T_c_w * T.inverse();
     } else {
         frame_current->is_keyframe_ = true;
-        std::cout << "[WARNING] get_pose not updated due to out-of-bounds scale value" << distance << std::endl;
+        std::cout << "[WARNING] getPose not updated due to out-of-bounds scale value" << distance << std::endl;
     }
 
-    frame_current->set_pose(T_c_w);
+    frame_current->setPose(T_c_w);
 }
 
-void Estimation::remove_outliers(std::shared_ptr<Frame> frame, cv::Mat inliers) {
+void Estimation::removeOutliers(std::shared_ptr<Frame> frame, cv::Mat inliers) {
 
     for (int idx = 0; idx < inliers.rows; idx++)
     {
