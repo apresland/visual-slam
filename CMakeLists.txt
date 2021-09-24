@@ -42,6 +42,7 @@ add_executable(stereo
         src/frontend.cpp
         src/backend.cpp
         src/map.cpp
+        src/mappoint.cpp
         src/sequence.cpp
         src/camera.cpp
         src/detector.cpp
@@ -54,6 +55,7 @@ add_executable(stereo
 target_link_libraries(stereo
         ${OpenCV_LIBS}
         ${Sophus_LIBRARIES}
+        ceres
         g2o_core
         g2o_stuff
         g2o_types_sba

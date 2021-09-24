@@ -10,6 +10,9 @@ void Map::insert_keyframe(std::shared_ptr<Frame> keyframe) {
         keyframes_[keyframe->id_] = keyframe;
         active_keyframes_[keyframe->id_] = keyframe;
     }
+    if (active_keyframes_.size() > num_active_keyframes_) {
+        remove_old_keyframe();
+    }
 }
 
 void Map::insert_landmark(std::shared_ptr<MapPoint> landmark) {
@@ -28,5 +31,49 @@ std::unordered_map<unsigned long, std::shared_ptr<Frame>> Map::keyframes() {
 
 Map::LandmarksType Map::landmarks() {
     return landmarks_;
+}
+
+void Map::remove_old_keyframe() {
+    if (current_frame_ == nullptr) return;
+    double max_dis = 0, min_dis = 9999;
+    double max_kf_id = 0, min_kf_id = 0;
+    auto Twc = current_frame_->get_pose().inverse();
+    for (auto& kf : active_keyframes_) {
+        if (kf.second == current_frame_) continue;
+        auto dis = (kf.second->get_pose() * Twc).log().norm();
+        if (dis > max_dis) {
+            max_dis = dis;
+            max_kf_id = kf.first;
+        }
+        if (dis < min_dis) {
+            min_dis = dis;
+            min_kf_id = kf.first;
+        }
+    }
+
+    const double min_dis_th = 0.2;
+    std::shared_ptr<Frame> frame_to_remove {nullptr};
+    if (min_dis < min_dis_th) {
+        frame_to_remove = keyframes_.at(min_kf_id);
+    } else {
+        frame_to_remove = keyframes_.at(max_kf_id);
+    }
+
+    active_keyframes_.erase(frame_to_remove->id_);
+    clean_map();
+}
+
+void Map::clean_map() {
+    int cnt_landmark_removed = 0;
+    for (auto iter = active_landmarks_.begin();
+         iter != active_landmarks_.end();) {
+        if (iter->second->observed_times_ == 0) {
+            iter = active_landmarks_.erase(iter);
+            cnt_landmark_removed++;
+        } else {
+            ++iter;
+        }
+    }
+    std::cout << "Removed " << cnt_landmark_removed << " active landmarks" << std::endl;
 }
 

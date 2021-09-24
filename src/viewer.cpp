@@ -86,6 +86,11 @@ void Viewer::display_tracking(const std::shared_ptr<Frame> frame_previous,
 
 void Viewer::display_trajectory(const std::shared_ptr<Frame> frame_current) {
 
+    if ( ! frame_previous) {
+        frame_previous = frame_current;
+        return;
+    }
+
     unsigned int true_pose_id = frame_current->id_;
     Sophus::SE3d T_c_w = frame_current->get_pose();
     Sophus::SE3d T_w_c = T_c_w.inverse();
@@ -96,9 +101,11 @@ void Viewer::display_trajectory(const std::shared_ptr<Frame> frame_current) {
     cv::Mat overlay;
     trajectory_.copyTo(overlay);
     for (auto &mappoint : frame_current->get_points_3d()) {
-        int mp_x = mappoint.x + 300;
-        int mp_y = mappoint.z + 100;
-        cv::circle(overlay, cv::Point(mp_x, mp_y) ,5, CV_RGB(126,126,126), 1);
+        Eigen::Vector3d v3d(mappoint.x, mappoint.y, mappoint.z);
+        //v3d = frame_current->get_pose() * v3d;
+        int mp_x = v3d.x() + 300;
+        int mp_y = v3d.z() + 100;
+        cv::circle(overlay, cv::Point(mp_x, mp_y) ,1, CV_RGB(126,126,126), 1);
     }
     cv::addWeighted(overlay, 0.05, trajectory_, 1 - 0.05, 0, trajectory_);
     cv::circle(trajectory_, cv::Point(x, y) ,1, CV_RGB(0,0,255), 2);

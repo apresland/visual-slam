@@ -16,12 +16,12 @@ void Estimation::estimate(std::shared_ptr<Frame> frame_previous,
 
     cv::Mat inliers;
     cv::Mat coeffs = cv::Mat::zeros(4, 1, CV_64FC1);
-    cv::Mat t = cv::Mat::zeros(3, 1, CV_64F);
-    cv::Mat r = cv::Mat::zeros(3, 1, CV_64FC1);
-    cv::solvePnPRansac(points_3d, points_2d, K, coeffs, r, t,
+    cv::Mat tvec = cv::Mat::zeros(3, 1, CV_64F);
+    cv::Mat rvec = cv::Mat::zeros(3, 1, CV_64FC1);
+    cv::solvePnPRansac(points_3d, points_2d, K, coeffs, rvec, tvec,
                        false, 100, 1.0, 0.999, inliers );
     cv::Mat R = cv::Mat::eye(3, 3, CV_64F);
-    cv::Rodrigues(r, R);
+    cv::Rodrigues(rvec, R);
 
     // Relative motion (T)
     Eigen::Matrix3d SO3_R;
@@ -29,14 +29,14 @@ void Estimation::estimate(std::shared_ptr<Frame> frame_previous,
     SO3_R << R.at<double>(0, 0), R.at<double>(0, 1), R.at<double>(0, 2),
             R.at<double>(1, 0), R.at<double>(1, 1), R.at<double>(1, 2),
             R.at<double>(2, 0), R.at<double>(2, 1), R.at<double>(2, 2);
-    SO3_t << t.at<double>(0, 0), t.at<double>(1, 0), t.at<double>(2, 0);
+    SO3_t << tvec.at<double>(0, 0), tvec.at<double>(1, 0), tvec.at<double>(2, 0);
 
     Sophus::SE3d T = Sophus::SE3d(SO3_R, SO3_t);
 
     remove_outliers(frame_current, inliers);
 
-    double distance = cv::norm(t);
-    double angle = cv::norm(R);
+    double angle = T.rotationMatrix().norm();
+    double distance = T.translation().norm();
     std::cout << "[INFO] Frontend::esimate_pose - relative motion = " << distance << " angle = " << angle << std::endl;
 
     // Transform World-to-Camera
@@ -44,9 +44,8 @@ void Estimation::estimate(std::shared_ptr<Frame> frame_previous,
     if (distance > 0.05 && distance < 5) {
         frame_current->is_keyframe_ = true;
         T_c_w = T_c_w * T.inverse();
-        //T_c_w = T;
     } else {
-        frame_current->is_keyframe_ = false;
+        frame_current->is_keyframe_ = true;
         std::cout << "[WARNING] get_pose not updated due to out-of-bounds scale value" << distance << std::endl;
     }
 

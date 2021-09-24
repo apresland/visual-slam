@@ -45,7 +45,6 @@ int Frontend::process(std::shared_ptr<Frame> frame_previous, std::shared_ptr<Fra
 
     if ( ! frame_previous || ! frame_current || ! frame_next) return -1;
 
-
     // -----------------------------------------------------------------------------------------------------------------
     // Tracking : track features from previous frame using KLT method
     // -----------------------------------------------------------------------------------------------------------------
@@ -67,13 +66,12 @@ int Frontend::process(std::shared_ptr<Frame> frame_previous, std::shared_ptr<Fra
         feature->landmark_->point_3d_.x = v3d[0];
         feature->landmark_->point_3d_.y = v3d[1];
         feature->landmark_->point_3d_.z = v3d[2];
+        frame_current->landmarks_.push_back(feature->landmark_);
     }
 
-    if( 0 != frame_current->id_ ) {
+    if ( 0 != frame_current->id_ && frame_current->id_ % 5 == 0) {
         insert_keyframe(frame_current);
     }
-
-    //backend_->update_map();
 
     // -----------------------------------------------------------------------------------------------------------------
     // Visualization : update visualization with current estimated state
@@ -84,6 +82,7 @@ int Frontend::process(std::shared_ptr<Frame> frame_previous, std::shared_ptr<Fra
     // Detection : detect new features with FAST and bucketing
     // -----------------------------------------------------------------------------------------------------------------
     if ( frame_id_ % 5 == 0 ) {
+        backend_->update_map();
         detector_.detect(frame_current, frame_previous);
     }
 

@@ -7,7 +7,6 @@
 #include <condition_variable>
 #include "camera.h"
 #include "map.h"
-#include "optimization.h"
 
 class Backend {
 public:
@@ -37,8 +36,6 @@ private:
 
     std::condition_variable map_update_;
     std::atomic<bool> running_;
-
-    Optimization optimization_;
 };
 
 #endif //VISUAL_SLAM_BACKEND_H

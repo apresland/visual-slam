@@ -16,6 +16,8 @@ public:
 
     void insert_keyframe(std::shared_ptr<Frame> keyframe);
     void insert_landmark(std::shared_ptr<MapPoint> landmark);
+    void remove_old_keyframe();
+    void clean_map();
 
     std::unordered_map<unsigned long, std::shared_ptr<Frame>> keyframes();
     LandmarksType landmarks();
@@ -27,7 +29,7 @@ public:
     std::shared_ptr<Frame> current_frame_ {nullptr};
 
     // settings
-    int num_active_keyframes_ = 7;
+    int num_active_keyframes_ = 10;
 };
 
 #endif //VISUAL_SLAM_MAP_H

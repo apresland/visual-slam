@@ -22,6 +22,11 @@ public:
         pose_ = pose;
     }
 
+    std::vector<std::shared_ptr<MapPoint>> get_landmarks(){
+        std::unique_lock<std::mutex> lck(mutex_);
+        return landmarks_;
+    }
+
     std::vector<cv::Point2f> get_points_left() {
         return features2points(features_left_);
     }
@@ -63,10 +68,12 @@ public:
     cv::Mat image_right_;
     std::vector<std::shared_ptr<Feature>> features_left_;
     std::vector<std::shared_ptr<Feature>> features_right_;
+    std::vector<std::shared_ptr<MapPoint>> landmarks_;
+    bool is_keyframe_ {false};
 
+private:
     std::mutex mutex_;
     Sophus::SE3d pose_ {Sophus::SE3d()};
-    bool is_keyframe_ {false};
 };
 
 #endif //VISUAL_SLAM_FRAME_H

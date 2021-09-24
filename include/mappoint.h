@@ -5,6 +5,7 @@
 #include <mutex>
 #include <Eigen/Core>
 #include <opencv2/opencv.hpp>
+#include "feature.h"
 
 struct Feature;
 struct MapPoint {
@@ -24,6 +25,13 @@ public:
         observations_.push_back(observation);
         observed_times_++;
     }
+
+    std::vector<std::weak_ptr<Feature>> observations() {
+        std::unique_lock<std::mutex> lck(mutex_);
+        return observations_;
+    }
+
+    void remove_observation(std::shared_ptr<Feature> feat);
 
 public:
     unsigned long id_;
