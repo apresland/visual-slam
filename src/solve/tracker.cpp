@@ -1,7 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <opencv2/opencv.hpp>
-#include "frame.h"
+#include <sensor/frame.h>
 #include "tracker.h"
 
 void Tracker::track(std::shared_ptr<Frame> frame_previous, std::shared_ptr<Frame> frame_current) {

@@ -1,7 +1,7 @@
 #include <vector>
 #include <memory>
-#include "frame.h"
-#include "feature.h"
+#include <sensor/feature.h>
+#include <sensor/frame.h>
 #include "matcher.h"
 
 void Matcher::match(std::shared_ptr<Frame> frame) {

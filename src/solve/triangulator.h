@@ -2,8 +2,8 @@
 #define VISUAL_SLAM_TRIANGULATION_H
 #include <opencv2/opencv.hpp>
 #include <memory>
-#include "camera.h"
-#include "map.h"
+#include <sensor/camera.h>
+#include <map/map.h>
 
 struct Frame;
 class Triangulator {

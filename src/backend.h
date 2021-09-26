@@ -5,8 +5,8 @@
 #include <mutex>
 #include <atomic>
 #include <condition_variable>
-#include "camera.h"
-#include "map.h"
+#include <sensor/camera.h>
+#include <map/map.h>
 
 class Backend {
 public:

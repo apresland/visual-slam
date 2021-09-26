@@ -6,13 +6,13 @@
 #include <Eigen/Geometry>
 #include <sophus/se3.hpp>
 #include "system.h"
-#include "frame.h"
+#include "sensor/frame.h"
 #include "viewer.h"
 #include "frontend.h"
 #include "backend.h"
-#include "matcher.h"
-#include "triangulator.h"
-#include "estimation.h"
+#include "solve/matcher.h"
+#include "solve/triangulator.h"
+#include "solve/estimation.h"
 
 System::System(std::string path_to_sequence)
     : path_root_(path_to_sequence)

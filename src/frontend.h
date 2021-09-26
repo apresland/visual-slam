@@ -3,15 +3,15 @@
 
 #include <memory>
 #include "sophus/se3.hpp"
-#include "camera.h"
-#include "frame.h"
-#include "detector.h"
-#include "matcher.h"
-#include "tracker.h"
-#include "triangulator.h"
-#include "estimation.h"
+#include <sensor/camera.h>
+#include <sensor/frame.h>
+#include <solve/detector.h>
+#include <solve/tracker.h>
+#include <solve/triangulator.h>
+#include <solve/estimation.h>
+#include <solve/matcher.h>
+#include <map/map.h>
 #include "backend.h"
-#include "map.h"
 #include "viewer.h"
 
 constexpr unsigned int MIN_FEATURE_COUNT = 500;

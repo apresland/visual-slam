@@ -1,5 +1,5 @@
 #include <utility>
-#include "map.h"
+#include <map/map.h>
 
 void Map::insertKeyframe(std::shared_ptr<Frame> keyframe) {
     current_frame_ = keyframe;

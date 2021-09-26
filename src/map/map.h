@@ -3,8 +3,8 @@
 #include <mutex>
 #include <memory>
 #include <unordered_map>
-#include "mappoint.h"
-#include "frame.h"
+#include <sensor/mappoint.h>
+#include <sensor/frame.h>
 
 class Map {
 public:

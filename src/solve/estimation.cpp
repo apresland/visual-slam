@@ -1,4 +1,4 @@
-#include "frame.h"
+#include <sensor/frame.h>
 #include "estimation.h"
 
 // 3D-to-2D: Motion from 3D structure and 2D image feature correspondence.

@@ -2,8 +2,7 @@
 #define VISUAL_SLAM_MATCHER_H
 
 #include <opencv2/opencv.hpp>
-#include "frame.h"
-#include "viewer.h"
+#include <sensor/frame.h>
 
 class Matcher {
 public:

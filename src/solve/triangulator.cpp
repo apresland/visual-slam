@@ -1,6 +1,6 @@
 #include <memory>
-#include "frame.h"
-#include "triangulator.h"
+#include <sensor/frame.h>
+#include <solve/triangulator.h>
 
 void Triangulator::triangulate(std::shared_ptr<Frame> frame) {
 

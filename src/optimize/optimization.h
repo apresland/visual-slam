@@ -3,7 +3,7 @@
 
 #include <ceres/local_parameterization.h>
 #include <sophus/se3.hpp>
-#include "map.h"
+#include <map/map.h>
 
 class Optimization {
 public:

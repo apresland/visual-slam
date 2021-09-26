@@ -3,8 +3,8 @@
 
 #include <memory>
 #include <opencv2/opencv.hpp>
-#include "frame.h"
-#include "feature.h"
+#include <sensor/frame.h>
+#include <sensor/feature.h>
 
 constexpr unsigned int GRID_CELL_SIZE = 15;
 

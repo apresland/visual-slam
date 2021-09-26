@@ -8,7 +8,7 @@
 #include <memory>
 #include <Eigen/Core>
 #include "sequence.h"
-#include "camera.h"
+#include "sensor/camera.h"
 
 class System {
 public:

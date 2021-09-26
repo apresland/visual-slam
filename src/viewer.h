@@ -4,7 +4,7 @@
 #include <memory>
 #include <fstream>
 #include "sophus/se3.hpp"
-#include "frame.h"
+#include "sensor/frame.h"
 
 class Viewer {
 public:

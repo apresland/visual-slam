@@ -1,6 +1,6 @@
 #include <opencv2/opencv.hpp>
 #include "viewer.h"
-#include "feature.h"
+#include "sensor/feature.h"
 
 const std::string FEATURES_WINDOW_NAME = "Features";
 const std::string BUCKETED_FEATURES_WINDOW_NAME = "Bucketed Fetures";

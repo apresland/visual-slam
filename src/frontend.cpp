@@ -1,9 +1,7 @@
 #include <algorithm>
 #include <opencv2/opencv.hpp>
 #include <sophus/se3.hpp>
-#include "observation.h"
-#include "feature.h"
-#include "mappoint.h"
+#include <solve/detector.h>
 #include "frontend.h"
 
 Frontend::Frontend() {}

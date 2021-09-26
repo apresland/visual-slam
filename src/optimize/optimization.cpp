@@ -1,7 +1,7 @@
 #include <ceres/ceres.h>
 #include "sophus/se3.hpp"
 #include <opencv2/core/eigen.hpp>
-#include "optimization.h"
+#include <optimize/optimization.h>
 
 void Optimization::optimize(Map::KeyframesType unordered_keyframes,
                             Map::LandmarksType unordered_landmarks,
