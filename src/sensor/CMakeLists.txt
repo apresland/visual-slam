@@ -7,5 +7,4 @@ target_sources(
         ${CMAKE_CURRENT_SOURCE_DIR}/frame.h
         ${CMAKE_CURRENT_SOURCE_DIR}/mappoint.h
         ${CMAKE_CURRENT_SOURCE_DIR}/mappoint.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/observation.h
 )

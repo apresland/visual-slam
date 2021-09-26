@@ -55,13 +55,13 @@ void Viewer::displayTracking(const std::shared_ptr<Frame> frame_previous,
                              const std::shared_ptr<Frame> frame_current) {
 
     const cv::Mat &image_left_t1 = frame_current->image_left_;
-    unsigned int frame_id = frame_current->id_;
+    unsigned int frame_id = frame_current->getID();
     std::vector<cv::Point2f> points_left_t0;
     std::vector<cv::Point2f> points_left_t1;
 
     for(int i=0; i < frame_current->features_left_.size(); i++) {
-        points_left_t0.push_back(frame_previous->features_left_[i]->point_2d_);
-        points_left_t1.push_back(frame_current->features_left_[i]->point_2d_);
+        points_left_t0.push_back(frame_previous->features_left_[i]->getPoint2D());
+        points_left_t1.push_back(frame_current->features_left_[i]->getPoint2D());
     }
 
     int radius = 2;
@@ -91,7 +91,7 @@ void Viewer::displayTrajectory(const std::shared_ptr<Frame> frame_current) {
         return;
     }
 
-    unsigned int true_pose_id = frame_current->id_;
+    unsigned int true_pose_id = frame_current->getID();
     Sophus::SE3d T_c_w = frame_current->getPose();
     Sophus::SE3d T_w_c = T_c_w.inverse();
     Eigen::Matrix3d rotation = T_c_w.rotationMatrix();

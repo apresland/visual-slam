@@ -42,10 +42,10 @@ void Estimation::estimate(std::shared_ptr<Frame> frame_previous,
     // Transform World-to-Camera
     Sophus::SE3d T_c_w = frame_previous->getPose();
     if (distance > 0.05 && distance < 5) {
-        frame_current->is_keyframe_ = true;
+        frame_current->setIsKeyframe(true);
         T_c_w = T_c_w * T.inverse();
     } else {
-        frame_current->is_keyframe_ = true;
+        frame_current->setIsKeyframe(true);
         std::cout << "[WARNING] getPose not updated due to out-of-bounds scale value" << distance << std::endl;
     }
 
@@ -57,13 +57,13 @@ void Estimation::removeOutliers(std::shared_ptr<Frame> frame, cv::Mat inliers) {
     for (int idx = 0; idx < inliers.rows; idx++)
     {
         int index = inliers.at<int>(idx, 0);
-        frame->features_left_[index]->is_inlier_ = true;
+        frame->features_left_[index]->isInlier(true);
     }
 
     std::vector<std::shared_ptr<Feature>> features_left(frame->features_left_);
     frame->features_left_.clear();
     for ( int i =0; i < features_left.size(); i++)
     {
-        if ( features_left[i]->is_inlier_) frame->features_left_.push_back(features_left[i]);
+        if ( features_left[i]->getIsInlier()) frame->features_left_.push_back(features_left[i]);
     }
 }

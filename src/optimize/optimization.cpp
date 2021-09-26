@@ -18,40 +18,38 @@ void Optimization::optimize(Map::KeyframesType unordered_keyframes,
 
     std::map<size_t, Sophus::SE3d> ceres_poses;
     for(const auto& keyframe : keyframes) {
-        ceres_poses[keyframe.second->id_] = keyframe.second->getPose().inverse();
-        problem.AddParameterBlock(ceres_poses[keyframe.second->id_].data(), Sophus::SE3d::num_parameters, se3_parameterization);
+        ceres_poses[keyframe.second->getID()] = keyframe.second->getPose().inverse();
+        problem.AddParameterBlock(ceres_poses[keyframe.second->getID()].data(), Sophus::SE3d::num_parameters, se3_parameterization);
     }
 
     std::map<unsigned long, std::shared_ptr<MapPoint>> landmarks;
     for(const auto& keyframe : keyframes)
     {
-        for (auto &landmark : keyframe.second->landmarks_)
+        for (auto &landmark : keyframe.second->getLandmarks())
         {
-            landmarks[landmark->id_] = landmark;
+            landmarks[landmark->getID()] = landmark;
         }
     }
 
     Eigen::Vector3d coordinates[landmarks.size()];
     int i = 0;
     for (auto& landmark : landmarks) {
-        Eigen::Vector3d point(
-                landmark.second->point_3d_.x,
-                landmark.second->point_3d_.y,
-                landmark.second->point_3d_.z);
+        const cv::Point3f& p3d = landmark.second->getPoint3D();
+        Eigen::Vector3d point(p3d.x, p3d.y, p3d.z);
         coordinates[i] = point;
         problem.AddParameterBlock(coordinates[i].data(), 3);
         for (const auto& observation : landmark.second->observations()) {
-            ReprojectionError* constraint = new ReprojectionError(observation.lock()->point_2d_.x,
-                                                                  observation.lock()->point_2d_.y,
+            ReprojectionError* constraint = new ReprojectionError(observation.lock()->getPoint2D().x,
+                                                                  observation.lock()->getPoint2D().y,
                                                                   intrinsics);
             auto cost_func_numeric = new ceres::NumericDiffCostFunction<ReprojectionError, ceres::CENTRAL, 2, 7, 3>(constraint);
             problem.AddResidualBlock(cost_func_numeric,
                                      nullptr /* squared loss */,
-                                     ceres_poses[observation.lock()->frame_id_].data(),
+                                     ceres_poses[observation.lock()->getFrame()->getID()].data(),
                                      coordinates[i].data());
 
-            if(observation.lock()->frame_id_ < 2)
-                problem.SetParameterBlockConstant(ceres_poses[observation.lock()->frame_id_].data());
+            if(observation.lock()->getFrame()->getID() < 2)
+                problem.SetParameterBlockConstant(ceres_poses[observation.lock()->getFrame()->getID()].data());
         }
         i += 1;
     }
@@ -67,14 +65,15 @@ void Optimization::optimize(Map::KeyframesType unordered_keyframes,
 
     i = 0;
     for (auto& landmark :  landmarks) {
-        landmark.second->point_3d_.x = coordinates[i].x();
-        landmark.second->point_3d_.y = coordinates[i].y();
-        landmark.second->point_3d_.z = coordinates[i].z();
+        cv::Point3f& p3d = landmark.second->getPoint3D();
+        p3d.x = coordinates[i].x();
+        p3d.y = coordinates[i].y();
+        p3d.z = coordinates[i].z();
         i += 1;
     }
 
     for(auto& keyframe : keyframes) {
-        const auto ceres_pose = ceres_poses[keyframe.second->id_];
+        const auto ceres_pose = ceres_poses[keyframe.second->getID()];
         keyframe.second->setPose(ceres_pose.inverse());
     }
 

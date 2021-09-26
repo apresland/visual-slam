@@ -22,7 +22,7 @@ void Tracker::track(std::shared_ptr<Frame> frame_previous, std::shared_ptr<Frame
         if(status[i]) {
             cv::Point2f p2d_t1 = frame_t1_points_2d_left[i];
             std::shared_ptr<Feature> feature_t1 = std::make_shared<Feature>(frame_current, p2d_t1);
-            feature_t1->landmark_ = frame_previous->features_left_[i]->landmark_;
+            feature_t1->setLandmark(frame_previous->features_left_[i]->getLandmark());
             frame_current->features_left_.push_back(feature_t1);
         }
     }

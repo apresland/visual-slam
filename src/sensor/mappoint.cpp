@@ -6,7 +6,7 @@ void MapPoint::removeObservation(std::shared_ptr<Feature> feat) {
          iter++) {
         if (iter->lock() == feat) {
             observations_.erase(iter);
-            feat->landmark_.reset();
+            feat->getLandmark().reset();
             observed_times_--;
             break;
         }

@@ -8,7 +8,7 @@ Frontend::Frontend() {}
 
 void Frontend::update(std::shared_ptr<Frame> frame) {;
 
-    frame->id_ = frame_id_;
+    frame->setID(frame_id_);
     frame_next_ = frame;
 
     switch (status_) {
@@ -34,7 +34,7 @@ int Frontend::initialize(std::shared_ptr<Frame> frame) {
     detector_.detect(frame, nullptr);
     matcher_->match(frame);
     triangulator_->triangulate(frame);
-    frame->is_keyframe_ = true;
+    frame->setIsKeyframe(true);
     map_->insertKeyframe(frame);
     status_ = TRACKING;
 }
@@ -58,16 +58,16 @@ int Frontend::process(std::shared_ptr<Frame> frame_previous, std::shared_ptr<Fra
     // -----------------------------------------------------------------------------------------------------------------
     for ( auto &feature : frame_current->features_left_ )
     {
-        auto & p3d = feature->landmark_->point_3d_;
+        auto & p3d = feature->getLandmark()->getPoint3D();
         Eigen::Vector3d v3d(p3d.x, p3d.y, p3d.z);
         v3d = frame_current->getPose() * v3d;
-        feature->landmark_->point_3d_.x = v3d[0];
-        feature->landmark_->point_3d_.y = v3d[1];
-        feature->landmark_->point_3d_.z = v3d[2];
-        frame_current->landmarks_.push_back(feature->landmark_);
+        p3d.x = v3d[0];
+        p3d.y = v3d[1];
+        p3d.z = v3d[2];
+        frame_current->getLandmarks().push_back(feature->getLandmark());
     }
 
-    if ( 0 != frame_current->id_ && frame_current->id_ % 5 == 0) {
+    if ( 0 != frame_current->getID() && frame_current->getID() % 5 == 0) {
         insertKeyframe(frame_current);
     }
 
@@ -102,10 +102,10 @@ int Frontend::restart() {
 
 void Frontend::insertKeyframe(std::shared_ptr<Frame> frame) {
 
-    if ( ! frame->is_keyframe_) {
+    if ( ! frame->getIsKeyframe() ) {
         return;
     }
 
-    std::cout << "[INFO] Frontend::insert_frame {" << frame->id_ << "} - input features " << frame->features_left_.size() << std::endl;
+    std::cout << "[INFO] Frontend::insert_frame {" << frame->getID() << "} - input features " << frame->features_left_.size() << std::endl;
     map_->insertKeyframe(frame);
 }

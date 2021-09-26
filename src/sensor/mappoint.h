@@ -8,16 +8,34 @@
 #include "feature.h"
 
 struct Feature;
-struct MapPoint {
-
+class MapPoint {
 public:
     MapPoint(){}
     MapPoint(long id, cv::Point3f point_3d)
-        : id_(id), point_3d_(point_3d) {}
+        : id_(id), point_3d_(point_3d) {
 
-    void setPosition3D(cv::Point3f point_3d) {
+    }
+
+    unsigned long getID() {
+        return id_;
+    }
+
+    void setID(unsigned long id) {
+        id_ = id;
+    }
+
+    int getObservedTimes() {
+        return observed_times_;
+    }
+
+    void setPoint3D(cv::Point3f point_3d) {
         std::unique_lock<std::mutex> lck(mutex_);
         point_3d_ = point_3d;
+    }
+
+    cv::Point3f& getPoint3D() {
+        std::unique_lock<std::mutex> lck(mutex_);
+        return point_3d_;
     }
 
     void addObservation(std::shared_ptr<Feature> observation) {
@@ -33,7 +51,7 @@ public:
         return observations_;
     }
 
-public:
+private:
     unsigned long id_;
     cv::Point3f point_3d_;
     std::mutex mutex_;

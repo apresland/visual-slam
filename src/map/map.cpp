@@ -3,12 +3,12 @@
 
 void Map::insertKeyframe(std::shared_ptr<Frame> keyframe) {
     current_frame_ = keyframe;
-    if (keyframes_.find(keyframe->id_) == keyframes_.end()) {
-        keyframes_.insert(make_pair(keyframe->id_, keyframe));
-        active_keyframes_.insert(make_pair(keyframe->id_, keyframe));
+    if (keyframes_.find(keyframe->getID()) == keyframes_.end()) {
+        keyframes_.insert(make_pair(keyframe->getID(), keyframe));
+        active_keyframes_.insert(make_pair(keyframe->getID(), keyframe));
     } else {
-        keyframes_[keyframe->id_] = keyframe;
-        active_keyframes_[keyframe->id_] = keyframe;
+        keyframes_[keyframe->getID()] = keyframe;
+        active_keyframes_[keyframe->getID()] = keyframe;
     }
     if (active_keyframes_.size() > num_active_keyframes_) {
         removeKeyframe();
@@ -16,12 +16,12 @@ void Map::insertKeyframe(std::shared_ptr<Frame> keyframe) {
 }
 
 void Map::insertLandmark(std::shared_ptr<MapPoint> landmark) {
-    if (landmarks_.find(landmark->id_) == landmarks_.end()) {
-        landmarks_.insert( LandmarksType::value_type(landmark->id_, landmark));
-        active_landmarks_.insert(LandmarksType::value_type(landmark->id_, landmark));
+    if (landmarks_.find(landmark->getID()) == landmarks_.end()) {
+        landmarks_.insert( LandmarksType::value_type(landmark->getID(), landmark));
+        active_landmarks_.insert(LandmarksType::value_type(landmark->getID(), landmark));
     } else {
-        landmarks_.at(landmark->id_) = landmark;
-        active_landmarks_.at(landmark->id_) = landmark;
+        landmarks_.at(landmark->getID()) = landmark;
+        active_landmarks_.at(landmark->getID()) = landmark;
     }
 }
 
@@ -59,7 +59,7 @@ void Map::removeKeyframe() {
         frame_to_remove = keyframes_.at(max_kf_id);
     }
 
-    active_keyframes_.erase(frame_to_remove->id_);
+    active_keyframes_.erase(frame_to_remove->getID());
     clean_map();
 }
 
@@ -67,7 +67,7 @@ void Map::clean_map() {
     int cnt_landmark_removed = 0;
     for (auto iter = active_landmarks_.begin();
          iter != active_landmarks_.end();) {
-        if (iter->second->observed_times_ == 0) {
+        if (iter->second->getObservedTimes() == 0) {
             iter = active_landmarks_.erase(iter);
             cnt_landmark_removed++;
         } else {

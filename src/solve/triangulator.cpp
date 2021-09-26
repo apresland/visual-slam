@@ -23,17 +23,17 @@ void Triangulator::triangulate(std::shared_ptr<Frame> frame) {
     std::cout << "[INFO] Triangulator::triangulate - defining " << points3D.rows << " mappoints" << std::endl;
     for(int i=0; i< points3D.rows; ++i) {
         cv::Point3f point_3d = *points3D.ptr<cv::Point3f>(i);
-        if ( frame->features_left_[i]->landmark_ )
+        if ( frame->features_left_[i]->getLandmark() )
         {
-            frame->features_left_[i]->landmark_->point_3d_ = point_3d;
-            frame->features_left_[i]->landmark_->addObservation(frame->features_left_[i]);
+            frame->features_left_[i]->getLandmark()->setPoint3D(point_3d);
+            frame->features_left_[i]->getLandmark()->addObservation(frame->features_left_[i]);
             num_predefined++;
         } else {
             std::shared_ptr<MapPoint> map_point = std::make_shared<MapPoint>();
-            map_point->point_3d_ = point_3d;
-            map_point->id_ = landmark_id_;
+            map_point->setPoint3D(point_3d);
+            map_point->setID(landmark_id_);
             map_point->addObservation(frame->features_left_[i]);
-            frame->features_left_[i]->landmark_ = map_point;
+            frame->features_left_[i]->setLandmark(map_point);
             map_->insertLandmark(map_point);
             landmark_id_++;
         }
