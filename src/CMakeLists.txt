@@ -32,7 +32,6 @@ include_directories(${g2o_INCLUDE_DIRS})
 #include_directories( ${CSPARSE_INCLUDE_DIR} )
 
 add_executable(${PROJECT_NAME}
-        main.cpp
         system.cpp
         system.h
         frontend.cpp
