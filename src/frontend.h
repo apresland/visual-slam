@@ -57,7 +57,7 @@ private:
     int process();
     int restart();
 
-    void insertKeyframe(std::shared_ptr<Frame> frame);
+    void insertKeyframe(std::shared_ptr<Frame> &frame);
 
     Detector detector_;
     std::shared_ptr<Matcher> matcher_{};

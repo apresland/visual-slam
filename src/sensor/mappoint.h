@@ -46,7 +46,7 @@ public:
 
     void removeObservation(std::shared_ptr<Feature> feat);
 
-    std::vector<std::weak_ptr<Feature>> observations() {
+    std::vector<std::shared_ptr<Feature>> getObservations() {
         std::unique_lock<std::mutex> lck(mutex_);
         return observations_;
     }
@@ -55,7 +55,7 @@ private:
     unsigned long id_;
     cv::Point3f point_3d_;
     std::mutex mutex_;
-    std::vector<std::weak_ptr<Feature>> observations_;
+    std::vector<std::shared_ptr<Feature>> observations_;
     int observed_times_ {0};
 };
 

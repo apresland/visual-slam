@@ -11,7 +11,7 @@ class Triangulator {
 public:
     Triangulator(std::shared_ptr<Camera> camera_left, std::shared_ptr<Camera> camera_right)
         : camera_left_(camera_left), camera_right_(camera_right) {}
-    void triangulate(Context &context);
+    void triangulate(Context &context, bool is_initialize);
     void setMap(std::shared_ptr<Map> map) { map_ = map;}
 
 private:

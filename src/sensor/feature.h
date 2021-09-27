@@ -40,7 +40,7 @@ public:
 private:
 
     int id_{-1};
-    int frame_id_;
+    int frame_id_{-1};
     std::shared_ptr<MapPoint> landmark_{nullptr};
     cv::Point2f point_2d_;
     bool is_inlier_{false};

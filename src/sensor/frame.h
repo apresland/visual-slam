@@ -39,7 +39,7 @@ public:
         pose_ = pose;
     }
 
-    std::vector<std::shared_ptr<MapPoint>> getLandmarks(){
+    std::vector<std::shared_ptr<MapPoint>> & getLandmarks(){
         std::unique_lock<std::mutex> lck(mutex_);
         return landmarks_;
     }
@@ -88,7 +88,6 @@ public:
 
 private:
     int id_;
-
     bool is_keyframe_ {false};
 
     std::mutex mutex_;

@@ -1,12 +1,10 @@
 #include <memory>
-#include <string>
 #include <thread>
 #include <fstream>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <sophus/se3.hpp>
 #include "system.h"
-#include "sensor/frame.h"
 #include "viewer.h"
 #include "frontend.h"
 #include "backend.h"

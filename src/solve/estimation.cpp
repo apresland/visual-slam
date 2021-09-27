@@ -1,4 +1,5 @@
 #include <sensor/frame.h>
+#include "viewer.h"
 #include "estimation.h"
 
 // 3D-to-2D: Motion from 3D structure and 2D image feature correspondence.
@@ -48,6 +49,21 @@ void Estimation::estimate(Context &context, const cv::Mat K)
     }
 
     context.frame_current_->setPose(T_c_w);
+
+    for ( auto &feature : context.frame_current_->features_left_ )
+    {
+        auto & p3d = feature->getLandmark()->getPoint3D();
+        Eigen::Vector3d v3d(p3d.x, p3d.y, p3d.z);
+        v3d = context.frame_current_->getPose() * v3d;
+        p3d.x = v3d[0];
+        p3d.y = v3d[1];
+        p3d.z = v3d[2];
+        context.frame_current_->getLandmarks().push_back(feature->getLandmark());
+    }
+
+    if (context.viewer_) {
+        context.viewer_->displayTrajectory(context);
+    }
 }
 
 void Estimation::removeOutliers(Context &context, cv::Mat inliers) {

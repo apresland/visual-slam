@@ -2,9 +2,11 @@
 #include <opencv2/opencv.hpp>
 #include <sophus/se3.hpp>
 #include <solve/detector.h>
+#include <optimize/optimization.h>
 #include "frontend.h"
 
-Frontend::Frontend() {}
+Frontend::Frontend() {
+}
 
 void Frontend::pushback(cv::Mat &image_left, cv::Mat &image_right) {;
 
@@ -24,10 +26,20 @@ void Frontend::pushback(cv::Mat &image_left, cv::Mat &image_right) {;
 }
 
 int Frontend::initialize() {
-    detector_.detect(context_);
-    matcher_->match_stereo(context_);
-    context_.frame_current_->setIsKeyframe(true);
+
     context_.viewer_ = viewer_;
+
+    // -----------------------------------------------------------------------------------------------------------------
+    // Detection : detect new features with FAST and bucketing
+    // -----------------------------------------------------------------------------------------------------------------
+    detector_.detect(context_);
+
+    // -----------------------------------------------------------------------------------------------------------------
+    // Matching : stereo match 2D features using a circular method on 2 images (left/right)
+    // -----------------------------------------------------------------------------------------------------------------
+    matcher_->match_stereo(context_);
+
+    context_.frame_current_->setIsKeyframe(true);
     map_->insertKeyframe(context_.frame_current_);
     status_ = TRACKING;
 }
@@ -37,14 +49,14 @@ int Frontend::process() {
     if ( ! context_.frame_previous_ || ! context_.frame_current_ ) return -1;
 
     // -----------------------------------------------------------------------------------------------------------------
-    // Matching : circular match 2D features using a circular method
+    // Matching : circular match 2D features on 4 images (prev/current x left/right)
     // -----------------------------------------------------------------------------------------------------------------
     matcher_->match_quadro(context_);
 
     // -----------------------------------------------------------------------------------------------------------------
     // Triangulator : 3D map points triangulated from new stereo matched 2D features
     // -----------------------------------------------------------------------------------------------------------------
-    triangulator_->triangulate(context_);
+    triangulator_->triangulate(context_, false);
 
     // -----------------------------------------------------------------------------------------------------------------
     // Tracking : track features from previous frame using KLT method
@@ -56,35 +68,19 @@ int Frontend::process() {
     // -----------------------------------------------------------------------------------------------------------------
     estimation_->estimate(context_, camera_left_->K());
 
-    // -----------------------------------------------------------------------------------------------------------------
-    // Landmarks : transform triangulated features (camara frame) into world frame ready for next iteration
-    // -----------------------------------------------------------------------------------------------------------------
-    for ( auto &feature : context_.frame_current_->features_left_ )
-    {
-        auto & p3d = feature->getLandmark()->getPoint3D();
-        Eigen::Vector3d v3d(p3d.x, p3d.y, p3d.z);
-        v3d = context_.frame_current_->getPose() * v3d;
-        p3d.x = v3d[0];
-        p3d.y = v3d[1];
-        p3d.z = v3d[2];
-        context_.frame_current_->getLandmarks().push_back(feature->getLandmark());
-    }
-
     if ( 0 != context_.frame_current_->getID() && context_.frame_current_->getID() % 5 == 0) {
-        insertKeyframe(context_.frame_current_);
+        insertKeyframe(context_.frame_previous_);
     }
-
-    // -----------------------------------------------------------------------------------------------------------------
-    // Visualization : pushback visualization with current estimated state
-    // -----------------------------------------------------------------------------------------------------------------
-    viewer_->displayTrajectory(context_);
 
     // -----------------------------------------------------------------------------------------------------------------
     // Detection : detect new features with FAST and bucketing
     // -----------------------------------------------------------------------------------------------------------------
     if ( context_.frame_current_->getID() % 5 == 0 ) {
-        backend_->updateMap();
         detector_.detect(context_);
+    }
+
+    if ( context_.frame_current_->getID() % 10 == 0 ) {
+        backend_->updateMap();
     }
 }
 
@@ -93,12 +89,12 @@ int Frontend::restart() {
 }
 
 
-void Frontend::insertKeyframe(std::shared_ptr<Frame> frame) {
+void Frontend::insertKeyframe(std::shared_ptr<Frame> &frame) {
 
     if ( ! frame->getIsKeyframe() ) {
         return;
     }
 
-    std::cout << "[INFO] Frontend::insert_frame {" << frame->getID() << "} - input features " << frame->features_left_.size() << std::endl;
+    std::cout << "[INFO] Frontend::insert_frame {" << frame->getID() << "} - landmarks " << frame->landmarks_.size() << std::endl;
     map_->insertKeyframe(frame);
 }

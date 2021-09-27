@@ -2,7 +2,7 @@
 #include <sensor/frame.h>
 #include <solve/triangulator.h>
 
-void Triangulator::triangulate(Context &context) {
+void Triangulator::triangulate(Context &context, bool is_initialize) {
 
     std::shared_ptr<Frame> &frame = context.frame_previous_;
     std::vector<cv::Point2f>  matches_2d_left = frame->getPointsLeft();
@@ -31,11 +31,11 @@ void Triangulator::triangulate(Context &context) {
             num_predefined++;
         } else {
             std::shared_ptr<MapPoint> map_point = std::make_shared<MapPoint>();
-            map_point->setPoint3D(point_3d);
             map_point->setID(landmark_id_);
-            map_point->addObservation(frame->features_left_[i]);
             frame->features_left_[i]->setLandmark(map_point);
             map_->insertLandmark(map_point);
+            map_point->setPoint3D(point_3d);
+            map_point->addObservation(frame->features_left_[i]);
             landmark_id_++;
         }
     }
