@@ -39,7 +39,7 @@ void Matcher::match_stereo(Context &context) {
 
     context.frame_current_->features_right_.clear();
     for ( auto &pt : frame_t0_points_right ) {
-        std::shared_ptr<Feature> feature = std::make_shared<Feature>(context.frame_current_, pt);
+        std::shared_ptr<Feature> feature = std::make_shared<Feature>(context.frame_current_->getID(), pt);
         context.frame_current_->features_right_.push_back(feature);
     }
 }
@@ -98,7 +98,7 @@ void Matcher::match_quadro(Context &context) {
     context.frame_previous_->features_right_.clear();
     for ( int i =0; i < frame_t0_points_right.size(); i++ ) {
         cv::Point2f pt2d = frame_t0_points_right[i];
-        std::shared_ptr<Feature> feature = std::make_shared<Feature>(context.frame_previous_, pt2d);
+        std::shared_ptr<Feature> feature = std::make_shared<Feature>(context.frame_previous_->getID(), pt2d);
         context.frame_previous_->features_right_.push_back(feature);
     }
 

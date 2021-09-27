@@ -45,7 +45,7 @@ bool Detector::detect(Context &context) {
         int y = keypoints[i].pt.y;
         int index = static_cast<int>(y/GRID_CELL_SIZE)*NUMBER_GRID_CELL_COLS + static_cast<int>(x/GRID_CELL_SIZE);
         if ( ! occupancy_grid.at(index)) {
-            context.frame_current_->features_left_.push_back(std::make_shared<Feature>(context.frame_current_, keypoints[i].pt));
+            context.frame_current_->features_left_.push_back(std::make_shared<Feature>(context.frame_current_->getID(), keypoints[i].pt));
             occupancy_grid.at(index) = true;
             ++new_feature_count;
         }

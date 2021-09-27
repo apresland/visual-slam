@@ -45,11 +45,11 @@ void Optimization::optimize(Map::KeyframesType unordered_keyframes,
             auto cost_func_numeric = new ceres::NumericDiffCostFunction<ReprojectionError, ceres::CENTRAL, 2, 7, 3>(constraint);
             problem.AddResidualBlock(cost_func_numeric,
                                      nullptr /* squared loss */,
-                                     ceres_poses[observation.lock()->getFrame()->getID()].data(),
+                                     ceres_poses[observation.lock()->getFrameID()].data(),
                                      coordinates[i].data());
 
-            if(observation.lock()->getFrame()->getID() < 2)
-                problem.SetParameterBlockConstant(ceres_poses[observation.lock()->getFrame()->getID()].data());
+            if(observation.lock()->getFrameID() < 2)
+                problem.SetParameterBlockConstant(ceres_poses[observation.lock()->getFrameID()].data());
         }
         i += 1;
     }
