@@ -6,8 +6,11 @@
 
 Frontend::Frontend() {}
 
-void Frontend::update(std::shared_ptr<Frame> frame) {;
+void Frontend::pushback(cv::Mat &image_left, cv::Mat &image_right) {;
 
+    std::shared_ptr<Frame> frame = std::make_shared<Frame>();
+    frame->image_left_ = image_left;
+    frame->image_right_ = image_right;
     frame->setID(frame_id_);
     frame_next_ = frame;
 
@@ -72,7 +75,7 @@ int Frontend::process(std::shared_ptr<Frame> frame_previous, std::shared_ptr<Fra
     }
 
     // -----------------------------------------------------------------------------------------------------------------
-    // Visualization : update visualization with current estimated state
+    // Visualization : pushback visualization with current estimated state
     // -----------------------------------------------------------------------------------------------------------------
     viewer_->update(frame_previous, frame_current);
 

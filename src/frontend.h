@@ -23,7 +23,7 @@ public:
     enum Status {INITIALIZING, LOST, TRACKING};
 public:
     Frontend();
-    void update(std::shared_ptr<Frame> frame);
+    void pushback(cv::Mat &image_left, cv::Mat &image_right);
     void setMap(std::shared_ptr<Map> map) {
         map_ = map;
     }

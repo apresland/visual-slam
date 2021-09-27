@@ -83,11 +83,7 @@ void System::Run() {
         cv::resize(image_right, image_right_resized, cv::Size(), IMAGE_SCALE_FACTOR, IMAGE_SCALE_FACTOR,
                    cv::INTER_NEAREST);
 
-        std::shared_ptr<Frame> next_frame = std::make_shared<Frame>();
-        next_frame->setID(index);
-        next_frame->image_left_ = image_left_resized;
-        next_frame->image_right_ = image_right_resized;
-        frontend->update(next_frame);
+        frontend->pushback(image_left_resized, image_right_resized);
 
         ++index;
     }
