@@ -38,14 +38,10 @@ include_directories(${g2o_INCLUDE_DIRS})
 
 # ROS
 find_package(catkin REQUIRED COMPONENTS
-        geometry_msgs
-        nav_msgs
         roscpp
-        rospy
-        sensor_msgs
         std_msgs
-        visualization_msgs
         )
+include_directories(${catkin_INCLUDE_DIRS})
 
 add_executable(${PROJECT_NAME}
         system.cpp
@@ -60,9 +56,10 @@ add_executable(${PROJECT_NAME}
         viewer.cpp
         viewer.h)
 
-target_link_libraries(stereo
+target_link_libraries(${PROJECT_NAME}
         ${OpenCV_LIBS}
         ${Sophus_LIBRARIES}
+        ${catkin_LIBRARIES}
         ceres
         g2o_core
         g2o_stuff

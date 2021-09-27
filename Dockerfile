@@ -133,10 +133,6 @@ RUN sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main"
 RUN curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key add -
 RUN apt update && apt install -y ros-melodic-ros-base
 
-# ros setup
-RUN chmod u+x /opt/ros/melodic/setup.bash
-RUN /opt/ros/melodic/setup.bash
-
 # X11 forwarding
 ENV DISPLAY :0
 RUN export LIBGL_ALWAYS_INDIRECT=1
@@ -144,4 +140,5 @@ RUN export LIBGL_ALWAYS_INDIRECT=1
 WORKDIR /home/dev/
 
 # Upon start, run ssh daemon
-CMD ["/usr/sbin/sshd", "-D"]
+CMD /usr/sbin/sshd -D
+

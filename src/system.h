@@ -7,6 +7,7 @@
 
 #include <memory>
 #include <Eigen/Core>
+#include "ros/ros.h"
 #include "sequence.h"
 #include "sensor/camera.h"
 
@@ -26,6 +27,7 @@ private:
 
 int main(int argc, char **argv)
 {
+    ros::init(argc, argv, "slam_node");
     std::string path_to_sequence = "/data/kitti/odometry/dataset/sequences/00/";
     std::shared_ptr<System> odometry = std::make_shared<System>(path_to_sequence);
     odometry->Init();
