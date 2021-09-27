@@ -2,8 +2,9 @@
 #include <sensor/frame.h>
 #include <solve/triangulator.h>
 
-void Triangulator::triangulate(std::shared_ptr<Frame> frame) {
+void Triangulator::triangulate(Context &context) {
 
+    std::shared_ptr<Frame> &frame = context.frame_previous_;
     std::vector<cv::Point2f>  matches_2d_left = frame->getPointsLeft();
     std::vector<cv::Point2f>  matches_2d_right = frame->getPointsRight();
 

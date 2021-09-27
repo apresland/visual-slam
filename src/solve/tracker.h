@@ -2,12 +2,13 @@
 #define VISUAL_SLAM_TRACKER_H
 
 #include <memory>
+#include "context.h"
 
 struct Frame;
 class Tracker {
 public:
 Tracker() {}
-void track(std::shared_ptr<Frame> frame_previous, std::shared_ptr<Frame> frame_current);
+void track(Context &context);
 };
 
 #endif //VISUAL_SLAM_TRACKER_H

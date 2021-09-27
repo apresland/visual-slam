@@ -5,18 +5,16 @@
 #include <fstream>
 #include "sophus/se3.hpp"
 #include "sensor/frame.h"
+#include "context.h"
 
 class Viewer {
 public:
     Viewer();
     void init();
     void loadGroundTruthPoses();
-    void update(const std::shared_ptr<Frame> frame_previous,
-                const std::shared_ptr<Frame> frame_current);
-    void displayFeatures(const std::shared_ptr<Frame> frame_current);
-    void displayTracking(const std::shared_ptr<Frame> frame_previous,
-                         const std::shared_ptr<Frame> frame_current);
-    void displayTrajectory(const std::shared_ptr<Frame> frame_current);
+    void displayFeatures(const Context &context);
+    void displayTracking(const Context &context);
+    void displayTrajectory(const Context &context);
 
 private:
     std::vector<cv::Mat> ground_truth_poses_;

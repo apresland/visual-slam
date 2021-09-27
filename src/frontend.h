@@ -11,6 +11,7 @@
 #include <solve/estimation.h>
 #include <solve/matcher.h>
 #include <map/map.h>
+#include "context.h"
 #include "backend.h"
 #include "viewer.h"
 
@@ -52,8 +53,8 @@ public:
     }
 
 private:
-    int initialize(std::shared_ptr<Frame> frame);
-    int process(std::shared_ptr<Frame> frame_previous, std::shared_ptr<Frame> frame_current, std::shared_ptr<Frame> frame_next);
+    int initialize();
+    int process();
     int restart();
 
     void initializeMap(std::shared_ptr<Frame> frame);
@@ -69,12 +70,10 @@ private:
     std::shared_ptr<Viewer> viewer_{nullptr};
     std::shared_ptr<Camera> camera_left_{nullptr};
     std::shared_ptr<Camera> camera_right_{nullptr};
-    std::shared_ptr<Frame> frame_previous_{nullptr};
-    std::shared_ptr<Frame> frame_current_{nullptr};
-    std::shared_ptr<Frame> frame_next_{nullptr};
-    bool has_new_detections_{false};
     size_t feature_id_{0};
     size_t frame_id_{0};
+
+    Context context_;
 
     Sophus::SE3d relative_motion_;
 

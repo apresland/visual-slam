@@ -17,18 +17,10 @@ void Viewer::init() {
     //cv::namedWindow(DISPARITY_WINDOW_NAME);
 }
 
-void Viewer::update(const std::shared_ptr<Frame> frame_previous,
-                    const std::shared_ptr<Frame> frame_current) {
+void Viewer::displayFeatures(const Context &context) {
 
-    displayFeatures(frame_current);
-    displayTracking(frame_previous, frame_current);
-    displayTrajectory(frame_current);
-}
-
-void Viewer::displayFeatures(const std::shared_ptr<Frame> frame_current) {
-
-    const cv::Mat &image = frame_current->image_left_;
-    std::vector<cv::Point2f> points_left_t1 = frame_current->getPointsLeft();
+    const cv::Mat &image = context.frame_current_->image_left_;
+    std::vector<cv::Point2f> points_left_t1 = context.frame_current_->getPointsLeft();
 
     cv::Scalar color_g(0, 255, 0), color_b(255, 0, 0), color_r(0, 0, 255);
 
@@ -51,17 +43,15 @@ void Viewer::displayFeatures(const std::shared_ptr<Frame> frame_current) {
     cv::waitKey(1);
 }
 
-void Viewer::displayTracking(const std::shared_ptr<Frame> frame_previous,
-                             const std::shared_ptr<Frame> frame_current) {
+void Viewer::displayTracking(const Context &context) {
 
-    const cv::Mat &image_left_t1 = frame_current->image_left_;
-    unsigned int frame_id = frame_current->getID();
+    const cv::Mat &image_left_t1 = context.frame_current_->image_left_;
     std::vector<cv::Point2f> points_left_t0;
     std::vector<cv::Point2f> points_left_t1;
 
-    for(int i=0; i < frame_current->features_left_.size(); i++) {
-        points_left_t0.push_back(frame_previous->features_left_[i]->getPoint2D());
-        points_left_t1.push_back(frame_current->features_left_[i]->getPoint2D());
+    for(int i=0; i < context.frame_current_->features_left_.size(); i++) {
+        points_left_t0.push_back(context.frame_previous_->features_left_[i]->getPoint2D());
+        points_left_t1.push_back(context.frame_current_->features_left_[i]->getPoint2D());
     }
 
     int radius = 2;
@@ -84,15 +74,10 @@ void Viewer::displayTracking(const std::shared_ptr<Frame> frame_previous,
     cv::waitKey(1);
 }
 
-void Viewer::displayTrajectory(const std::shared_ptr<Frame> frame_current) {
+void Viewer::displayTrajectory(const Context &context) {
 
-    if ( ! frame_previous) {
-        frame_previous = frame_current;
-        return;
-    }
-
-    unsigned int true_pose_id = frame_current->getID();
-    Sophus::SE3d T_c_w = frame_current->getPose();
+    unsigned int true_pose_id = context.frame_current_->getID();
+    Sophus::SE3d T_c_w = context.frame_current_->getPose();
     Sophus::SE3d T_w_c = T_c_w.inverse();
     Eigen::Matrix3d rotation = T_c_w.rotationMatrix();
     Eigen::Vector3d translation = T_c_w.translation();
@@ -100,7 +85,7 @@ void Viewer::displayTrajectory(const std::shared_ptr<Frame> frame_current) {
     int y = int(translation[2]) + 100;
     cv::Mat overlay;
     trajectory_.copyTo(overlay);
-    for (auto &mappoint : frame_current->getPoints3D()) {
+    for (auto &mappoint : context.frame_current_->getPoints3D()) {
         Eigen::Vector3d v3d(mappoint.x, mappoint.y, mappoint.z);
         //v3d = frame_current->getPose() * v3d;
         int mp_x = v3d.x() + 300;

@@ -4,11 +4,11 @@
 #include <sensor/frame.h>
 #include "matcher.h"
 
-void Matcher::match(std::shared_ptr<Frame> frame) {
-    std::cout << "[INFO] Matcher::match_right - " << frame->features_left_.size() << " 2D points" << std::endl;
+void Matcher::match_stereo(Context &context) {
+    std::cout << "[INFO] Matcher::match_right - " << context.frame_current_->features_left_.size() << " 2D points" << std::endl;
 
-    std::vector<cv::Point2f> frame_t0_points_left = frame->getPointsLeft();
-    std::vector<cv::Point2f> frame_t0_points_right = frame->getPointsRight();
+    std::vector<cv::Point2f> frame_t0_points_left = context.frame_current_->getPointsLeft();
+    std::vector<cv::Point2f> frame_t0_points_right = context.frame_current_->getPointsRight();
 
     std::vector<float> err;
     std::vector<uchar> status;
@@ -16,7 +16,7 @@ void Matcher::match(std::shared_ptr<Frame> frame) {
     cv::TermCriteria term_criteria = cv::TermCriteria(cv::TermCriteria::COUNT+cv::TermCriteria::EPS, 30, 0.01);
 
     // matching with LK optical flow
-    calcOpticalFlowPyrLK(frame->image_left_, frame->image_right_, frame_t0_points_left, frame_t0_points_right, status, err, window_size, 3, term_criteria, 0, 0.001);
+    calcOpticalFlowPyrLK(context.frame_current_->image_left_, context.frame_current_->image_right_, frame_t0_points_left, frame_t0_points_right, status, err, window_size, 3, term_criteria, 0, 0.001);
 
     // filter out bad matches
     int deletion_correction = 0;
@@ -31,28 +31,28 @@ void Matcher::match(std::shared_ptr<Frame> frame) {
             // erase bad matches
             frame_t0_points_left.erase (frame_t0_points_left.begin() + (i - deletion_correction));
             frame_t0_points_right.erase (frame_t0_points_right.begin() + (i - deletion_correction));
-            frame->features_left_.erase (frame->features_left_.begin() + (i - deletion_correction));
+            context.frame_current_->features_left_.erase (context.frame_current_->features_left_.begin() + (i - deletion_correction));
 
             deletion_correction++;
         }
     }
 
-    frame->features_right_.clear();
+    context.frame_current_->features_right_.clear();
     for ( auto &pt : frame_t0_points_right ) {
-        std::shared_ptr<Feature> feature = std::make_shared<Feature>(frame, pt);
-        frame->features_right_.push_back(feature);
+        std::shared_ptr<Feature> feature = std::make_shared<Feature>(context.frame_current_, pt);
+        context.frame_current_->features_right_.push_back(feature);
     }
 }
 
-void Matcher::match(std::shared_ptr<Frame> frame_current, std::shared_ptr<Frame> frame_next) {
+void Matcher::match_quadro(Context &context) {
 
-    std::cout << "[INFO] Matcher::match - matching " << frame_current->features_left_.size() << " 2D points" << std::endl;
+    std::cout << "[INFO] Matcher::match_stereo - matching " << context.frame_previous_->features_left_.size() << " 2D points" << std::endl;
 
-    std::vector<cv::Point2f> frame_t0_points_left = frame_current->getPointsLeft();
-    std::vector<cv::Point2f> frame_t0_points_right = frame_current->getPointsRight();
+    std::vector<cv::Point2f> frame_t0_points_left = context.frame_previous_->getPointsLeft();
+    std::vector<cv::Point2f> frame_t0_points_right = context.frame_previous_->getPointsRight();
 
-    std::vector<cv::Point2f> frame_t1_points_left = frame_next->getPointsLeft();
-    std::vector<cv::Point2f> frame_t1_points_right = frame_next->getPointsRight();
+    std::vector<cv::Point2f> frame_t1_points_left = context.frame_current_->getPointsLeft();
+    std::vector<cv::Point2f> frame_t1_points_right = context.frame_current_->getPointsRight();
 
     std::vector<float> err;
     cv::Size window_size=cv::Size(21,21);
@@ -64,10 +64,10 @@ void Matcher::match(std::shared_ptr<Frame> frame_current, std::shared_ptr<Frame>
     std::vector<uchar> status_3;
 
     // circular matching with LK optical flow
-    calcOpticalFlowPyrLK(frame_current->image_left_, frame_next->image_left_, frame_t0_points_left, frame_t1_points_left, status_0, err, window_size, 3, term_criteria, 0, 0.001);
-    calcOpticalFlowPyrLK(frame_next->image_left_, frame_next->image_right_, frame_t1_points_left, frame_t1_points_right, status_1, err, window_size, 3, term_criteria, 0, 0.001);
-    calcOpticalFlowPyrLK(frame_next->image_right_, frame_current->image_right_, frame_t1_points_right, frame_t0_points_right, status_2, err, window_size, 3, term_criteria, 0, 0.001);
-    calcOpticalFlowPyrLK(frame_current->image_right_, frame_current->image_left_, frame_t0_points_right, frame_t0_points_left, status_3, err, window_size, 3, term_criteria, 0, 0.001);
+    calcOpticalFlowPyrLK(context.frame_previous_->image_left_, context.frame_current_->image_left_, frame_t0_points_left, frame_t1_points_left, status_0, err, window_size, 3, term_criteria, 0, 0.001);
+    calcOpticalFlowPyrLK(context.frame_current_->image_left_, context.frame_current_->image_right_, frame_t1_points_left, frame_t1_points_right, status_1, err, window_size, 3, term_criteria, 0, 0.001);
+    calcOpticalFlowPyrLK(context.frame_current_->image_right_, context.frame_previous_->image_right_, frame_t1_points_right, frame_t0_points_right, status_2, err, window_size, 3, term_criteria, 0, 0.001);
+    calcOpticalFlowPyrLK(context.frame_previous_->image_right_, context.frame_previous_->image_left_, frame_t0_points_right, frame_t0_points_left, status_3, err, window_size, 3, term_criteria, 0, 0.001);
 
     // filter out bad matches
     int deletion_correction = 0;
@@ -90,17 +90,17 @@ void Matcher::match(std::shared_ptr<Frame> frame_current, std::shared_ptr<Frame>
             frame_t0_points_right.erase (frame_t0_points_right.begin() + (i - deletion_correction));
             frame_t1_points_left.erase (frame_t1_points_left.begin() + (i - deletion_correction));
             frame_t1_points_right.erase (frame_t1_points_right.begin() + (i - deletion_correction));
-            frame_current->features_left_.erase(frame_current->features_left_.begin() + (i - deletion_correction));
+            context.frame_previous_->features_left_.erase(context.frame_previous_->features_left_.begin() + (i - deletion_correction));
             deletion_correction++;
         }
     }
 
-    frame_current->features_right_.clear();
+    context.frame_previous_->features_right_.clear();
     for ( int i =0; i < frame_t0_points_right.size(); i++ ) {
         cv::Point2f pt2d = frame_t0_points_right[i];
-        std::shared_ptr<Feature> feature = std::make_shared<Feature>(frame_current, pt2d);
-        frame_current->features_right_.push_back(feature);
+        std::shared_ptr<Feature> feature = std::make_shared<Feature>(context.frame_previous_, pt2d);
+        context.frame_previous_->features_right_.push_back(feature);
     }
 
-    std::cout << "[INFO] Matcher::match - matched " << frame_current->features_right_.size() << " 2D points" << std::endl;
+    std::cout << "[INFO] Matcher::match_stereo - matched " << context.frame_previous_->features_right_.size() << " 2D points" << std::endl;
 }

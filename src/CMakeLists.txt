@@ -34,6 +34,7 @@ include_directories(${g2o_INCLUDE_DIRS})
 add_executable(${PROJECT_NAME}
         system.cpp
         system.h
+        context.h
         frontend.cpp
         frontend.h
         backend.cpp
