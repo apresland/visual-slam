@@ -1,7 +1,12 @@
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_FLAGS "-std=c++14")
-
 set(CMAKE_BUILD_TYPE "Debug")
+
+# catkin interop
+set(CATKIN_DEVEL_PREFIX "${CMAKE_BINARY_DIR}/devel")
+set(CMAKE_PREFIX_PATH "${CMAKE_BINARY_DIR}/devel;/opt/ros/melodic")
+
+
 add_definitions("-DENABLE_SSE")
 set(CMAKE_CXX_FLAGS "-std=c++14 -O2 ${SSE_FLAGS} -msse4")
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
@@ -30,6 +35,17 @@ include_directories(${g2o_INCLUDE_DIRS})
 # CSparse
 #find_package( CSparse REQUIRED )
 #include_directories( ${CSPARSE_INCLUDE_DIR} )
+
+# ROS
+find_package(catkin REQUIRED COMPONENTS
+        geometry_msgs
+        nav_msgs
+        roscpp
+        rospy
+        sensor_msgs
+        std_msgs
+        visualization_msgs
+        )
 
 add_executable(${PROJECT_NAME}
         system.cpp
