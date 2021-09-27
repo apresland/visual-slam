@@ -60,6 +60,7 @@ void System::Run() {
     frontend->setViewer(viewer);
     frontend->setBackend(backend);
     viewer->init();
+    viewer->loadGroundTruthPoses();
 
     int index = 0;
     std::shared_ptr<Sequence::StereoPair> prev_element = nullptr;

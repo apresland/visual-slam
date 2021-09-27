@@ -8,12 +8,7 @@ Frontend::Frontend() {}
 
 void Frontend::pushback(cv::Mat &image_left, cv::Mat &image_right) {;
 
-    std::unique_ptr<Frame> frame = std::make_unique<Frame>();
-    frame->image_left_ = image_left;
-    frame->image_right_ = image_right;
-    frame->setID(frame_id_);
-
-    context_.frame_current_ = std::move(frame);
+    context_.pushback(image_left, image_right);
 
     switch (status_) {
         case INITIALIZING:
@@ -26,15 +21,9 @@ void Frontend::pushback(cv::Mat &image_left, cv::Mat &image_right) {;
             restart();
             break;
     }
-
-    context_.frame_previous_
-        = std::move(context_.frame_current_);
-
-    ++frame_id_;
 }
 
 int Frontend::initialize() {
-    viewer_->loadGroundTruthPoses();
     detector_.detect(context_);
     matcher_->match_stereo(context_);
     context_.frame_current_->setIsKeyframe(true);
@@ -93,7 +82,7 @@ int Frontend::process() {
     // -----------------------------------------------------------------------------------------------------------------
     // Detection : detect new features with FAST and bucketing
     // -----------------------------------------------------------------------------------------------------------------
-    if ( frame_id_ % 5 == 0 ) {
+    if ( context_.frame_current_->getID() % 5 == 0 ) {
         backend_->updateMap();
         detector_.detect(context_);
     }

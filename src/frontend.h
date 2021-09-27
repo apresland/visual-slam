@@ -57,7 +57,6 @@ private:
     int process();
     int restart();
 
-    void initializeMap(std::shared_ptr<Frame> frame);
     void insertKeyframe(std::shared_ptr<Frame> frame);
 
     Detector detector_;
@@ -70,12 +69,8 @@ private:
     std::shared_ptr<Viewer> viewer_{nullptr};
     std::shared_ptr<Camera> camera_left_{nullptr};
     std::shared_ptr<Camera> camera_right_{nullptr};
-    size_t feature_id_{0};
-    size_t frame_id_{0};
 
     Context context_;
-
-    Sophus::SE3d relative_motion_;
 
     Status status_{INITIALIZING};
 };
