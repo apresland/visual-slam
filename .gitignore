@@ -8,5 +8,6 @@
 **/CTestTestfile.cmake
 **/Makefile
 **/*.cbp
+**/*.idea/
 **/CMakeScripts
 **/compile_commands.json

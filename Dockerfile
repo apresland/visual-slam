@@ -1,9 +1,11 @@
-ARG cuda_version=11.4.1
-ARG ubuntu_version=18.04
+FROM osrf/ros:melodic-desktop-full
 
-FROM nvidia/cudagl:${cuda_version}-devel-ubuntu${ubuntu_version}
+# nvidia-container-runtime
+ENV NVIDIA_VISIBLE_DEVICES \
+    ${NVIDIA_VISIBLE_DEVICES:-all}
+ENV NVIDIA_DRIVER_CAPABILITIES \
+    ${NVIDIA_DRIVER_CAPABILITIES:+$NVIDIA_DRIVER_CAPABILITIES,}graphics
 
-#RUN rm /etc/apt/sources.list.d/nvidia-ml.list
 RUN apt-get clean && apt-get update
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
   apt-utils \
@@ -127,6 +129,12 @@ RUN cmake ..
 RUN make
 RUN make install
 
+# install ros
+#RUN apt update && apt install -y curl gnupg2 lsb-release
+#RUN sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
+#RUN curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key add -
+#RUN apt update && apt install -y ros-melodic-ros-base
+
 # X11 forwarding
 ENV DISPLAY :0
 RUN export LIBGL_ALWAYS_INDIRECT=1
@@ -134,4 +142,5 @@ RUN export LIBGL_ALWAYS_INDIRECT=1
 WORKDIR /home/dev/
 
 # Upon start, run ssh daemon
-CMD ["/usr/sbin/sshd", "-D"]
+CMD /usr/sbin/sshd -D
+

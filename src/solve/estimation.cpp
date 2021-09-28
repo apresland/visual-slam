@@ -1,17 +1,16 @@
-#include "frame.h"
+#include <sensor/frame.h>
+#include "viewer.h"
 #include "estimation.h"
 
 // 3D-to-2D: Motion from 3D structure and 2D image feature correspondence.
 // Use the Perspective-n-Point (PnP) algorithm to provide "perspective-from-3-points" (P3P). Estimates
-// the camera get_pose (t,r) that minimizes the reprojection error of 3D points onto the 2D image. Convert the
+// the camera getPose (t,r) that minimizes the reprojection error of 3D points onto the 2D image. Convert the
 // rotation vector (r) into a rotation matrix (R) with Rodrigues algorithm.
-void Estimation::estimate(std::shared_ptr<Frame> frame_previous,
-                          std::shared_ptr<Frame> frame_current,
-                          const cv::Mat K)
+void Estimation::estimate(Context &context, const cv::Mat K)
 {
-    std::vector<cv::Point2f> points_2d = frame_current->get_points_left();
+    std::vector<cv::Point2f> points_2d = context.frame_current_->getPointsLeft();
     std::cout << "[INFO] Frontend::estimate_pose - points { 2D " << points_2d.size() << " }" << std::endl;
-    std::vector<cv::Point3f> points_3d = frame_current->get_points_3d();
+    std::vector<cv::Point3f> points_3d = context.frame_current_->getPoints3D();
     std::cout << "[INFO] Frontend::estimate_pose - points { 3D " << points_3d.size() << " }" << std::endl;
 
     cv::Mat inliers;
@@ -33,37 +32,52 @@ void Estimation::estimate(std::shared_ptr<Frame> frame_previous,
 
     Sophus::SE3d T = Sophus::SE3d(SO3_R, SO3_t);
 
-    remove_outliers(frame_current, inliers);
+    removeOutliers(context, inliers);
 
     double angle = T.rotationMatrix().norm();
     double distance = T.translation().norm();
     std::cout << "[INFO] Frontend::esimate_pose - relative motion = " << distance << " angle = " << angle << std::endl;
 
     // Transform World-to-Camera
-    Sophus::SE3d T_c_w = frame_previous->get_pose();
+    Sophus::SE3d T_c_w = context.frame_previous_->getPose();
     if (distance > 0.05 && distance < 5) {
-        frame_current->is_keyframe_ = true;
+        context.frame_current_->setIsKeyframe(true);
         T_c_w = T_c_w * T.inverse();
     } else {
-        frame_current->is_keyframe_ = true;
-        std::cout << "[WARNING] get_pose not updated due to out-of-bounds scale value" << distance << std::endl;
+        context.frame_current_->setIsKeyframe(true);
+        std::cout << "[WARNING] getPose not updated due to out-of-bounds scale value" << distance << std::endl;
     }
 
-    frame_current->set_pose(T_c_w);
+    context.frame_current_->setPose(T_c_w);
+
+    for ( auto &feature : context.frame_current_->features_left_ )
+    {
+        auto & p3d = feature->getLandmark()->getPoint3D();
+        Eigen::Vector3d v3d(p3d.x, p3d.y, p3d.z);
+        v3d = context.frame_current_->getPose() * v3d;
+        p3d.x = v3d[0];
+        p3d.y = v3d[1];
+        p3d.z = v3d[2];
+        context.frame_current_->getLandmarks().push_back(feature->getLandmark());
+    }
+
+    if (context.viewer_) {
+        context.viewer_->displayTrajectory(context);
+    }
 }
 
-void Estimation::remove_outliers(std::shared_ptr<Frame> frame, cv::Mat inliers) {
+void Estimation::removeOutliers(Context &context, cv::Mat inliers) {
 
     for (int idx = 0; idx < inliers.rows; idx++)
     {
         int index = inliers.at<int>(idx, 0);
-        frame->features_left_[index]->is_inlier_ = true;
+        context.frame_current_->features_left_[index]->isInlier(true);
     }
 
-    std::vector<std::shared_ptr<Feature>> features_left(frame->features_left_);
-    frame->features_left_.clear();
+    std::vector<std::shared_ptr<Feature>> features_left(context.frame_current_->features_left_);
+    context.frame_current_->features_left_.clear();
     for ( int i =0; i < features_left.size(); i++)
     {
-        if ( features_left[i]->is_inlier_) frame->features_left_.push_back(features_left[i]);
+        if ( features_left[i]->getIsInlier()) context.frame_current_->features_left_.push_back(features_left[i]);
     }
 }

@@ -5,26 +5,26 @@
 #include <mutex>
 #include <atomic>
 #include <condition_variable>
-#include "camera.h"
-#include "map.h"
+#include <sensor/camera.h>
+#include <map/map.h>
 
 class Backend {
 public:
 
     Backend();
 
-    void set_cameras(std::shared_ptr<Camera> camera_left, std::shared_ptr<Camera> camera_right) {
+    void setCameras(std::shared_ptr<Camera> camera_left, std::shared_ptr<Camera> camera_right) {
         camera_left_ = camera_left;
         camera_right_ = camera_right;
     }
-    void set_map(std::shared_ptr<Map> map) { map_ = map; }
+    void setMap(std::shared_ptr<Map> map) { map_ = map; }
 
     void execute();
     void terminate();
     void optimize(Map::KeyframesType keyframes,
                   Map::LandmarksType landmarks);
 
-    void update_map();
+    void updateMap();
 
 private:
     std::shared_ptr<Camera> camera_left_{nullptr};

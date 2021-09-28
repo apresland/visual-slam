@@ -1,11 +1,12 @@
 #include <memory>
-#include "frame.h"
-#include "triangulator.h"
+#include <sensor/frame.h>
+#include <solve/triangulator.h>
 
-void Triangulator::triangulate(std::shared_ptr<Frame> frame) {
+void Triangulator::triangulate(Context &context, bool is_initialize) {
 
-    std::vector<cv::Point2f>  matches_2d_left = frame->get_points_left();
-    std::vector<cv::Point2f>  matches_2d_right = frame->get_points_right();
+    std::shared_ptr<Frame> &frame = context.frame_previous_;
+    std::vector<cv::Point2f>  matches_2d_left = frame->getPointsLeft();
+    std::vector<cv::Point2f>  matches_2d_right = frame->getPointsRight();
 
     std::cout << "[INFO] Triangulator::triangulate - input points 2D { L"
               << matches_2d_left.size() << " : R"
@@ -23,18 +24,18 @@ void Triangulator::triangulate(std::shared_ptr<Frame> frame) {
     std::cout << "[INFO] Triangulator::triangulate - defining " << points3D.rows << " mappoints" << std::endl;
     for(int i=0; i< points3D.rows; ++i) {
         cv::Point3f point_3d = *points3D.ptr<cv::Point3f>(i);
-        if ( frame->features_left_[i]->landmark_ )
+        if ( frame->features_left_[i]->getLandmark() )
         {
-            frame->features_left_[i]->landmark_->point_3d_ = point_3d;
-            frame->features_left_[i]->landmark_->add_observation(frame->features_left_[i]);
+            frame->features_left_[i]->getLandmark()->setPoint3D(point_3d);
+            frame->features_left_[i]->getLandmark()->addObservation(frame->features_left_[i]);
             num_predefined++;
         } else {
             std::shared_ptr<MapPoint> map_point = std::make_shared<MapPoint>();
-            map_point->point_3d_ = point_3d;
-            map_point->id_ = landmark_id_;
-            map_point->add_observation(frame->features_left_[i]);
-            frame->features_left_[i]->landmark_ = map_point;
-            map_->insert_landmark(map_point);
+            map_point->setID(landmark_id_);
+            frame->features_left_[i]->setLandmark(map_point);
+            map_->insertLandmark(map_point);
+            map_point->setPoint3D(point_3d);
+            map_point->addObservation(frame->features_left_[i]);
             landmark_id_++;
         }
     }

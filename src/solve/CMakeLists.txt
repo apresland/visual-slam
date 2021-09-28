@@ -1,0 +1,14 @@
+target_sources(
+        ${PROJECT_NAME}
+        PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/detector.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/detector.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/estimation.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/estimation.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/matcher.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/matcher.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/tracker.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/tracker.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/triangulator.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/triangulator.h
+)

@@ -1,27 +1,27 @@
 #include <utility>
-#include "map.h"
+#include <map/map.h>
 
-void Map::insert_keyframe(std::shared_ptr<Frame> keyframe) {
+void Map::insertKeyframe(std::shared_ptr<Frame> keyframe) {
     current_frame_ = keyframe;
-    if (keyframes_.find(keyframe->id_) == keyframes_.end()) {
-        keyframes_.insert(make_pair(keyframe->id_, keyframe));
-        active_keyframes_.insert(make_pair(keyframe->id_, keyframe));
+    if (keyframes_.find(keyframe->getID()) == keyframes_.end()) {
+        keyframes_.insert(make_pair(keyframe->getID(), keyframe));
+        active_keyframes_.insert(make_pair(keyframe->getID(), keyframe));
     } else {
-        keyframes_[keyframe->id_] = keyframe;
-        active_keyframes_[keyframe->id_] = keyframe;
+        keyframes_[keyframe->getID()] = keyframe;
+        active_keyframes_[keyframe->getID()] = keyframe;
     }
     if (active_keyframes_.size() > num_active_keyframes_) {
-        remove_old_keyframe();
+        removeKeyframe();
     }
 }
 
-void Map::insert_landmark(std::shared_ptr<MapPoint> landmark) {
-    if (landmarks_.find(landmark->id_) == landmarks_.end()) {
-        landmarks_.insert( LandmarksType::value_type(landmark->id_, landmark));
-        active_landmarks_.insert(LandmarksType::value_type(landmark->id_, landmark));
+void Map::insertLandmark(std::shared_ptr<MapPoint> landmark) {
+    if (landmarks_.find(landmark->getID()) == landmarks_.end()) {
+        landmarks_.insert( LandmarksType::value_type(landmark->getID(), landmark));
+        active_landmarks_.insert(LandmarksType::value_type(landmark->getID(), landmark));
     } else {
-        landmarks_.at(landmark->id_) = landmark;
-        active_landmarks_.at(landmark->id_) = landmark;
+        landmarks_.at(landmark->getID()) = landmark;
+        active_landmarks_.at(landmark->getID()) = landmark;
     }
 }
 
@@ -33,14 +33,14 @@ Map::LandmarksType Map::landmarks() {
     return landmarks_;
 }
 
-void Map::remove_old_keyframe() {
+void Map::removeKeyframe() {
     if (current_frame_ == nullptr) return;
     double max_dis = 0, min_dis = 9999;
     double max_kf_id = 0, min_kf_id = 0;
-    auto Twc = current_frame_->get_pose().inverse();
+    auto Twc = current_frame_->getPose().inverse();
     for (auto& kf : active_keyframes_) {
         if (kf.second == current_frame_) continue;
-        auto dis = (kf.second->get_pose() * Twc).log().norm();
+        auto dis = (kf.second->getPose() * Twc).log().norm();
         if (dis > max_dis) {
             max_dis = dis;
             max_kf_id = kf.first;
@@ -59,7 +59,7 @@ void Map::remove_old_keyframe() {
         frame_to_remove = keyframes_.at(max_kf_id);
     }
 
-    active_keyframes_.erase(frame_to_remove->id_);
+    active_keyframes_.erase(frame_to_remove->getID());
     clean_map();
 }
 
@@ -67,7 +67,7 @@ void Map::clean_map() {
     int cnt_landmark_removed = 0;
     for (auto iter = active_landmarks_.begin();
          iter != active_landmarks_.end();) {
-        if (iter->second->observed_times_ == 0) {
+        if (iter->second->getObservedTimes() == 0) {
             iter = active_landmarks_.erase(iter);
             cnt_landmark_removed++;
         } else {

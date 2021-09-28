@@ -1,100 +1,87 @@
 #include <algorithm>
 #include <opencv2/opencv.hpp>
 #include <sophus/se3.hpp>
-#include "observation.h"
-#include "feature.h"
-#include "mappoint.h"
+#include <solve/detector.h>
+#include <optimize/optimization.h>
 #include "frontend.h"
 
-Frontend::Frontend() {}
+Frontend::Frontend() {
+}
 
-void Frontend::update(std::shared_ptr<Frame> frame) {;
+void Frontend::pushback(cv::Mat &image_left, cv::Mat &image_right) {;
 
-    frame->id_ = frame_id_;
-    frame_next_ = frame;
+    context_.pushback(image_left, image_right);
 
     switch (status_) {
         case INITIALIZING:
-            initialize(frame_next_);
+            initialize();
             break;
         case TRACKING:
-            process(frame_previous_, frame_current_, frame_next_);
+            process();
             break;
         case LOST:
             restart();
             break;
     }
-
-    frame_previous_ = frame_current_;
-    frame_current_ = frame_next_;
-
-    ++frame_id_;
 }
 
-int Frontend::initialize(std::shared_ptr<Frame> frame) {
-    viewer_->load_poses();
-    detector_.detect(frame, nullptr);
-    matcher_->match(frame);
-    triangulator_->triangulate(frame);
-    frame->is_keyframe_ = true;
-    map_->insert_keyframe(frame);
-    status_ = TRACKING;
-}
+int Frontend::initialize() {
 
-int Frontend::process(std::shared_ptr<Frame> frame_previous, std::shared_ptr<Frame> frame_current, std::shared_ptr<Frame> frame_next) {
-
-    if ( ! frame_previous || ! frame_current || ! frame_next) return -1;
-
-    // -----------------------------------------------------------------------------------------------------------------
-    // Tracking : track features from previous frame using KLT method
-    // -----------------------------------------------------------------------------------------------------------------
-    tracker_->track(frame_previous, frame_current);
-
-    // -----------------------------------------------------------------------------------------------------------------
-    // Estimation : current pose estimate (PnP method) based on previous landmarks
-    // -----------------------------------------------------------------------------------------------------------------
-    estimation_->estimate(frame_previous, frame_current, camera_left_->K());
-
-    // -----------------------------------------------------------------------------------------------------------------
-    // Landmarks : transform triangulated features (camara frame) into world frame ready for next iteration
-    // -----------------------------------------------------------------------------------------------------------------
-    for ( auto &feature : frame_current->features_left_ )
-    {
-        auto & p3d = feature->landmark_->point_3d_;
-        Eigen::Vector3d v3d(p3d.x, p3d.y, p3d.z);
-        v3d = frame_current->get_pose() * v3d;
-        feature->landmark_->point_3d_.x = v3d[0];
-        feature->landmark_->point_3d_.y = v3d[1];
-        feature->landmark_->point_3d_.z = v3d[2];
-        frame_current->landmarks_.push_back(feature->landmark_);
-    }
-
-    if ( 0 != frame_current->id_ && frame_current->id_ % 5 == 0) {
-        insert_keyframe(frame_current);
-    }
-
-    // -----------------------------------------------------------------------------------------------------------------
-    // Visualization : update visualization with current estimated state
-    // -----------------------------------------------------------------------------------------------------------------
-    viewer_->update(frame_previous, frame_current);
+    context_.viewer_ = viewer_;
 
     // -----------------------------------------------------------------------------------------------------------------
     // Detection : detect new features with FAST and bucketing
     // -----------------------------------------------------------------------------------------------------------------
-    if ( frame_id_ % 5 == 0 ) {
-        backend_->update_map();
-        detector_.detect(frame_current, frame_previous);
-    }
+    detector_.detect(context_);
 
     // -----------------------------------------------------------------------------------------------------------------
-    // Matching : stereo match 2D features using a circular method
+    // Matching : stereo match 2D features using a circular method on 2 images (left/right)
     // -----------------------------------------------------------------------------------------------------------------
-    matcher_->match(frame_current, frame_next);
+    matcher_->match_stereo(context_);
+
+    context_.frame_current_->setIsKeyframe(true);
+    map_->insertKeyframe(context_.frame_current_);
+    status_ = TRACKING;
+}
+
+int Frontend::process() {
+
+    if ( ! context_.frame_previous_ || ! context_.frame_current_ ) return -1;
+
+    // -----------------------------------------------------------------------------------------------------------------
+    // Matching : circular match 2D features on 4 images (prev/current x left/right)
+    // -----------------------------------------------------------------------------------------------------------------
+    matcher_->match_quadro(context_);
 
     // -----------------------------------------------------------------------------------------------------------------
     // Triangulator : 3D map points triangulated from new stereo matched 2D features
     // -----------------------------------------------------------------------------------------------------------------
-    triangulator_->triangulate(frame_current);
+    triangulator_->triangulate(context_, false);
+
+    // -----------------------------------------------------------------------------------------------------------------
+    // Tracking : track features from previous frame using KLT method
+    // -----------------------------------------------------------------------------------------------------------------
+    tracker_->track(context_);
+
+    // -----------------------------------------------------------------------------------------------------------------
+    // Estimation : current pose estimate (PnP method) based on previous landmarks
+    // -----------------------------------------------------------------------------------------------------------------
+    estimation_->estimate(context_, camera_left_->K());
+
+    if ( 0 != context_.frame_current_->getID() && context_.frame_current_->getID() % 5 == 0) {
+        insertKeyframe(context_.frame_previous_);
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------
+    // Detection : detect new features with FAST and bucketing
+    // -----------------------------------------------------------------------------------------------------------------
+    if ( context_.frame_current_->getID() % 5 == 0 ) {
+        detector_.detect(context_);
+    }
+
+    if ( context_.frame_current_->getID() % 10 == 0 ) {
+        backend_->updateMap();
+    }
 }
 
 int Frontend::restart() {
@@ -102,12 +89,12 @@ int Frontend::restart() {
 }
 
 
-void Frontend::insert_keyframe(std::shared_ptr<Frame> frame) {
+void Frontend::insertKeyframe(std::shared_ptr<Frame> &frame) {
 
-    if ( ! frame->is_keyframe_) {
+    if ( ! frame->getIsKeyframe() ) {
         return;
     }
 
-    std::cout << "[INFO] Frontend::insert_frame {" << frame->id_ << "} - input features " << frame->features_left_.size() << std::endl;
-    map_->insert_keyframe(frame);
+    std::cout << "[INFO] Frontend::insert_frame {" << frame->getID() << "} - landmarks " << frame->landmarks_.size() << std::endl;
+    map_->insertKeyframe(frame);
 }

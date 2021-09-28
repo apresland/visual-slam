@@ -1,18 +1,16 @@
 #include <memory>
-#include <string>
 #include <thread>
 #include <fstream>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <sophus/se3.hpp>
 #include "system.h"
-#include "frame.h"
 #include "viewer.h"
 #include "frontend.h"
 #include "backend.h"
-#include "matcher.h"
-#include "triangulator.h"
-#include "estimation.h"
+#include "solve/matcher.h"
+#include "solve/triangulator.h"
+#include "solve/estimation.h"
 
 System::System(std::string path_to_sequence)
     : path_root_(path_to_sequence)
@@ -44,22 +42,23 @@ void System::Run() {
     std::shared_ptr<Map> map = std::make_shared<Map>();
 
     std::shared_ptr<Triangulator> triangulator = std::make_shared<Triangulator>(cameras_[0], cameras_[1]);
-    triangulator->set_map(map);
+    triangulator->setMap(map);
 
     std::shared_ptr<Backend> backend = std::make_shared<Backend>();
-    backend->set_cameras(cameras_[0], cameras_[1]);
-    backend->set_map(map);
+    backend->setCameras(cameras_[0], cameras_[1]);
+    backend->setMap(map);
 
     std::shared_ptr<Frontend> frontend = std::make_shared<Frontend>();
-    frontend->set_cameras(cameras_[0], cameras_[1]);
-    frontend->set_map(map);
-    frontend->set_matcher(matcher);
-    frontend->set_tracker(tracker);
-    frontend->set_triangulator(triangulator);
-    frontend->set_estimation(estimation);
-    frontend->set_viewer(viewer);
-    frontend->set_backend(backend);
+    frontend->setCameras(cameras_[0], cameras_[1]);
+    frontend->setMap(map);
+    frontend->setMatcher(matcher);
+    frontend->setTracker(tracker);
+    frontend->setTriangulator(triangulator);
+    frontend->setEstimation(estimation);
+    frontend->setViewer(viewer);
+    frontend->setBackend(backend);
     viewer->init();
+    viewer->loadGroundTruthPoses();
 
     int index = 0;
     std::shared_ptr<Sequence::StereoPair> prev_element = nullptr;
@@ -83,11 +82,7 @@ void System::Run() {
         cv::resize(image_right, image_right_resized, cv::Size(), IMAGE_SCALE_FACTOR, IMAGE_SCALE_FACTOR,
                    cv::INTER_NEAREST);
 
-        std::shared_ptr<Frame> next_frame = std::make_shared<Frame>();
-        next_frame->id_ = index;
-        next_frame->image_left_ = image_left_resized;
-        next_frame->image_right_ = image_right_resized;
-        frontend->update(next_frame);
+        frontend->pushback(image_left_resized, image_right_resized);
 
         ++index;
     }

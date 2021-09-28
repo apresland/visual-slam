@@ -1,0 +1,10 @@
+target_sources(
+        ${PROJECT_NAME}
+        PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/camera.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/camera.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/feature.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/frame.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/mappoint.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/mappoint.cpp
+)
