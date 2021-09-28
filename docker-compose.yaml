@@ -5,7 +5,15 @@ networks:
     driver: bridge
 
 services:
-  dev:
+
+  ros-master:
+    image: ros:melodic-ros-core
+    command: stdbuf -o L roscore
+    networks:
+      - ros
+    restart: always
+
+  ros-odometry:
     runtime: nvidia
     build:
       context: .
@@ -15,7 +23,7 @@ services:
     security_opt:
       - seccomp:unconfined
       - apparmor:unconfined
-    container_name: dev
+    container_name: odometry
     networks:
       - ros
     ports:
@@ -32,14 +40,7 @@ services:
       - /data:/data #
       - /home/andy:/home/andy:rw
 
-  ros-master:
-    image: ros:melodic-ros-core
-    command: stdbuf -o L roscore
-    networks:
-      - ros
-    restart: always
-
-  viz:
+  ros-viz:
     image: osrf/ros:melodic-desktop-full
     container_name: ros_visualizer
     depends_on:
