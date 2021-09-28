@@ -73,15 +73,6 @@ EXPOSE 22 7777
 RUN useradd -ms /bin/bash dev
 RUN echo 'dev:dev' | chpasswd
 
-# install opencv
-WORKDIR /home/dev/
-RUN git clone https://github.com/opencv/opencv.git
-RUN git clone https://github.com/opencv/opencv_contrib.git
-WORKDIR /home/dev/opencv/build
-RUN cmake -DOPENCV_EXTRA_MODULES_PATH=/home/dev/opencv_contrib/modules ..
-RUN make
-RUN make install
-
 RUN apt-get install libxmu-dev libxi-dev
 
 #install eigen
@@ -130,7 +121,7 @@ RUN make
 RUN make install
 
 # ros packages
-RUN catkin_create_pkg cv_bridge image_transport
+RUN catkin_create_pkg cv_bridge image_transport image_transport_plugins
 
 # X11 forwarding
 ENV DISPLAY :0
