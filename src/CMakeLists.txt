@@ -4,7 +4,7 @@ set(CMAKE_BUILD_TYPE "Debug")
 
 # catkin interop
 set(CATKIN_DEVEL_PREFIX "${CMAKE_BINARY_DIR}/devel")
-set(CMAKE_PREFIX_PATH "${CMAKE_BINARY_DIR}/devel;/opt/ros/melodic")
+set(CMAKE_PREFIX_PATH "${CMAKE_BINARY_DIR}/devel;/opt/ros/melodic/;/opt/ros/melodic/lib;/opt/ros/melodic/share;")
 
 
 add_definitions("-DENABLE_SSE")
@@ -37,11 +37,14 @@ include_directories(${g2o_INCLUDE_DIRS})
 #include_directories( ${CSPARSE_INCLUDE_DIR} )
 
 # ROS
-find_package(catkin REQUIRED COMPONENTS
-        roscpp
-        std_msgs
+find_package(catkin REQUIRED
+        COMPONENTS roscpp std_msgs image_transport
         )
 include_directories(${catkin_INCLUDE_DIRS})
+
+catkin_package(
+        CATKIN_DEPENDS std_msgs image_transport
+)
 
 add_executable(${PROJECT_NAME}
         system.cpp

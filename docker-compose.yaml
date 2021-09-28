@@ -6,30 +6,37 @@ networks:
 
 services:
 
-  ros-master:
+  master:
     image: ros:melodic-ros-core
+    container_name: master
     command: stdbuf -o L roscore
     networks:
       - ros
     restart: always
 
-  ros-odometry:
+  odometry:
     runtime: nvidia
     build:
       context: .
       dockerfile: Dockerfile
+    container_name: odometry
+    depends_on:
+        - master
     stdin_open: true
     tty: true
     security_opt:
       - seccomp:unconfined
       - apparmor:unconfined
-    container_name: odometry
     networks:
       - ros
     ports:
       - "7776:22" # SSH
       - "7777:7777" # GDB Server
     environment:
+      - "ROS_MASTER_URI=http://master:11311"
+      - "ROS_HOSTNAME=odometry"
+      - "ROS_ROOT=/opt/ros/melodic/share/ros"
+      - "ROS_PACKAGE_PATH=/opt/ros/melodic/share"
       - "DISPLAY"
       - "QT_X11_NO_MITSHM=1"
     volumes:
@@ -40,16 +47,16 @@ services:
       - /data:/data #
       - /home/andy:/home/andy:rw
 
-  ros-viz:
+  vizualizer:
     image: osrf/ros:melodic-desktop-full
-    container_name: ros_visualizer
+    container_name: visualizer
     depends_on:
-      - ros-master
+      - master
     networks:
       - ros
     environment:
-      - "ROS_MASTER_URI=http://ros-master:11311"
-      - "ROS_HOSTNAME=ros_visualizer"
+      - "ROS_MASTER_URI=http://master:11311"
+      - "ROS_HOSTNAME=visualizer"
       - "DISPLAY"
       - "QT_X11_NO_MITSHM=1" #fix some QT bugs
     #share user in order to access your x11

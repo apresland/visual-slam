@@ -14,7 +14,7 @@
 class System {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
-    System(std::string path_to_sequence);
+    System(ros::NodeHandle& nodeHandle);
     bool Init();
     void Run();
 private:
@@ -22,14 +22,15 @@ private:
     std::string calibration_file_;
     std::shared_ptr<Sequence> sequence_ = nullptr;
     std::vector<std::shared_ptr<Camera>> cameras_;
+    ros::NodeHandle& node_handle_;
     bool initialized_ = false;
 };
 
 int main(int argc, char **argv)
 {
-    ros::init(argc, argv, "slam_node");
-    std::string path_to_sequence = "/data/kitti/odometry/dataset/sequences/00/";
-    std::shared_ptr<System> odometry = std::make_shared<System>(path_to_sequence);
+    ros::init(argc, argv, "odometry_node");
+    ros::NodeHandle node_handle("odometry");
+    std::shared_ptr<System> odometry = std::make_shared<System>(node_handle);
     odometry->Init();
     odometry->Run();
     return 0;

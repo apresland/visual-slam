@@ -12,8 +12,12 @@
 #include "solve/triangulator.h"
 #include "solve/estimation.h"
 
-System::System(std::string path_to_sequence)
-    : path_root_(path_to_sequence)
+#include <cv_bridge/cv_bridge.h>
+#include <image_transport/image_transport.h>
+
+System::System(ros::NodeHandle& node_handle)
+    : node_handle_(node_handle)
+    , path_root_("/data/kitti/odometry/dataset/sequences/00/")
     , calibration_file_(path_root_ + "/calib.txt"){}
 
 bool System::Init() {
@@ -59,6 +63,8 @@ void System::Run() {
     frontend->setBackend(backend);
     viewer->init();
     viewer->loadGroundTruthPoses();
+
+    image_transport::ImageTransport img_trans(node_handle_);
 
     int index = 0;
     std::shared_ptr<Sequence::StereoPair> prev_element = nullptr;
