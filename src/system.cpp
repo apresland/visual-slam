@@ -1,6 +1,7 @@
 #include <memory>
 #include <thread>
 #include <fstream>
+#include <cv_bridge/cv_bridge.h>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <sophus/se3.hpp>
@@ -12,13 +13,14 @@
 #include "solve/triangulator.h"
 #include "solve/estimation.h"
 
-#include <cv_bridge/cv_bridge.h>
-#include <image_transport/image_transport.h>
-
 System::System(ros::NodeHandle& node_handle)
     : node_handle_(node_handle)
+    , image_trans_(node_handle_)
     , path_root_("/data/kitti/odometry/dataset/sequences/00/")
-    , calibration_file_(path_root_ + "/calib.txt"){}
+    , calibration_file_(path_root_ + "/calib.txt") {
+    image_pub_00_ = image_trans_.advertiseCamera("grayscale/left/image", 1);
+    image_pub_01_ = image_trans_.advertiseCamera("grayscale/right/image", 1);
+}
 
 bool System::Init() {
     sequence_ = std::make_shared<Sequence>(path_root_);
@@ -39,10 +41,16 @@ bool System::Init() {
 
 void System::Run() {
 
+    std::shared_ptr<Viewer> viewer;
+    //viewer = std::make_shared<Viewer>();
+    if (viewer) {
+        viewer->init();
+        viewer->loadGroundTruthPoses();
+    }
+
     std::shared_ptr<Matcher> matcher = std::make_shared<Matcher>();
     std::shared_ptr<Tracker> tracker = std::make_shared<Tracker>();
     std::shared_ptr<Estimation> estimation = std::shared_ptr<Estimation>();
-    std::shared_ptr<Viewer> viewer = std::make_shared<Viewer>();
     std::shared_ptr<Map> map = std::make_shared<Map>();
 
     std::shared_ptr<Triangulator> triangulator = std::make_shared<Triangulator>(cameras_[0], cameras_[1]);
@@ -61,12 +69,8 @@ void System::Run() {
     frontend->setEstimation(estimation);
     frontend->setViewer(viewer);
     frontend->setBackend(backend);
-    viewer->init();
-    viewer->loadGroundTruthPoses();
 
-    image_transport::ImageTransport img_trans(node_handle_);
-
-    int index = 0;
+    cv_bridge::CvImage cv_bridge;;
     std::shared_ptr<Sequence::StereoPair> prev_element = nullptr;
     for (std::shared_ptr<Sequence::StereoPair> element : sequence_->elements_)
     {
@@ -78,20 +82,46 @@ void System::Run() {
             }
         }
 
-        cv::Mat image_left_resized;
-        cv::Mat image_left = cv::imread(element->image_left_,cv::IMREAD_GRAYSCALE);
-        cv::resize(image_left, image_left_resized, cv::Size(), IMAGE_SCALE_FACTOR, IMAGE_SCALE_FACTOR,
-                   cv::INTER_NEAREST);
+        cv::Mat image_00
+            = cv::imread(element->image_00_, cv::IMREAD_GRAYSCALE);
+        sensor_msgs::ImagePtr image_msg_00
+            = cv_bridge::CvImage(std_msgs::Header(), "mono8", image_00).toImageMsg();
+        image_msg_00->header.frame_id
+            = "base_link";
 
-        cv::Mat image_right_resized;
-        cv::Mat image_right = cv::imread(element->image_right_,cv::IMREAD_GRAYSCALE);
-        cv::resize(image_right, image_right_resized, cv::Size(), IMAGE_SCALE_FACTOR, IMAGE_SCALE_FACTOR,
-                   cv::INTER_NEAREST);
+        cv::Mat image_01
+                = cv::imread(element->image_01_, cv::IMREAD_GRAYSCALE);
+        sensor_msgs::ImagePtr image_msg_01
+                = cv_bridge::CvImage(std_msgs::Header(), "mono8", image_01).toImageMsg();
+        image_msg_01->header.frame_id
+                = "base_link";
 
-        frontend->pushback(image_left_resized, image_right_resized);
+        publishLeftImage(image_msg_00);
+        publishRightImage(image_msg_01);
 
-        ++index;
+        frontend->pushback(image_00, image_01);
+        ros::spinOnce();
     }
 
     backend->terminate();
+}
+
+void System::publishLeftImage(const sensor_msgs::ImagePtr &image) {
+
+    sensor_msgs::CameraInfoPtr
+        camera_info_msg(new sensor_msgs::CameraInfo());
+    camera_info_msg->header.frame_id
+        = image->header.frame_id;
+
+    image_pub_00_.publish(image, camera_info_msg);
+}
+
+void System::publishRightImage(const sensor_msgs::ImagePtr &image) {
+
+    sensor_msgs::CameraInfoPtr
+            camera_info_msg(new sensor_msgs::CameraInfo());
+    camera_info_msg->header.frame_id
+            = image->header.frame_id;
+
+    image_pub_01_.publish(image, camera_info_msg);
 }

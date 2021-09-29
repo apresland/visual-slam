@@ -24,8 +24,8 @@ void Sequence::LoadFrames(std::string filepath) {
         std::istringstream timestamp_string(line);
         std::shared_ptr<StereoPair> pair = std::make_shared<StereoPair>();
         timestamp_string >> pair->timestamp_;
-        pair->image_left_ = loadImageLeft(frame_index, sequence_path_);
-        pair->image_right_ = loadImageRight(frame_index, sequence_path_);
+        pair->image_00_ = loadImageLeft(frame_index, sequence_path_);
+        pair->image_01_ = loadImageRight(frame_index, sequence_path_);
         elements_.push_back(pair);
         ++frame_index;
     }

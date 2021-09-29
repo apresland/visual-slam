@@ -38,12 +38,12 @@ include_directories(${g2o_INCLUDE_DIRS})
 
 # ROS
 find_package(catkin REQUIRED
-        COMPONENTS roscpp std_msgs image_transport
+        COMPONENTS roscpp std_msgs image_transport cv_bridge
         )
 include_directories(${catkin_INCLUDE_DIRS})
 
 catkin_package(
-        CATKIN_DEPENDS std_msgs image_transport
+        CATKIN_DEPENDS std_msgs image_transport cv_bridge
 )
 
 add_executable(${PROJECT_NAME}

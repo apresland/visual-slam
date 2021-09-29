@@ -14,7 +14,6 @@ void Viewer::init() {
     cv::namedWindow(BUCKETED_FEATURES_WINDOW_NAME);
     cv::namedWindow(CIRCULAR_MATCHES_WINDOW_NAME);
     cv::namedWindow(OPTICAL_FLOW_WINDOW_NAME);
-    //cv::namedWindow(DISPARITY_WINDOW_NAME);
 }
 
 void Viewer::displayFeatures(const Context &context) {
