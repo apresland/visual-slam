@@ -129,6 +129,8 @@ RUN export LIBGL_ALWAYS_INDIRECT=1
 
 WORKDIR /home/dev/
 
+RUN echo "source /opt/ros/melodic/setup.sh" >> /home/dev/.bashrc
+
 # Upon start, run ssh daemon
 CMD /usr/sbin/sshd -D
 
