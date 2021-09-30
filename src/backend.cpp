@@ -26,7 +26,7 @@ void Backend::updateMap() {
 void Backend::optimize(Map::KeyframesType keyframes,
                        Map::LandmarksType landmarks) {
     std::shared_ptr<Optimization> optimizer = std::make_shared<Optimization>();
-    optimizer->optimize(keyframes, landmarks, camera_left_->K());
+    //optimizer->optimize(keyframes, landmarks, camera_left_->K());
 }
 
 void Backend::terminate() {

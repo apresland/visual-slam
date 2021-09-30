@@ -12,6 +12,7 @@
 #include "nav_msgs/Path.h"
 #include "sequence.h"
 #include "sensor/camera.h"
+#include "context.h"
 
 class System {
 public:
@@ -26,6 +27,8 @@ private:
     void publishLeftImage(const sensor_msgs::ImagePtr &image);
     void publishRightImage(const sensor_msgs::ImagePtr &image);
     void publishPose(Sophus::SE3d pose);
+
+    void vizualizeContext(const Context& context);
 
     std::string path_root_;
     std::string calibration_file_;
@@ -42,7 +45,11 @@ private:
     ros::Publisher path_publisher_truth_;
     bool initialized_ = false;
 
-    std::vector<cv::Mat> ground_truth_poses_;
+    image_transport::Publisher image_pub_keypoints_;
+    image_transport::Publisher image_pub_features_;
+    image_transport::Publisher image_pub_optical_flow_;
+
+
 };
 
 int main(int argc, char **argv)

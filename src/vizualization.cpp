@@ -1,46 +1,54 @@
 #include <opencv2/opencv.hpp>
 #include "vizualization.h"
 
-cv::Mat Vizualization::prepareFeaturesVisual(const Context &context) {
+void Vizualization::prepareKeypointsVisual(const Context &context, cv::Mat& output_image) {
+
+    if ( ! context.frame_current_) {
+        return  ;
+    }
 
     const cv::Mat &input_image = context.frame_current_->image_left_;
-    std::vector<cv::Point2f> points_left_t1 = context.frame_current_->getPointsLeft();
-    std::vector<cv::KeyPoint> keypoints;
-    for(auto point : points_left_t1) {
-        keypoints.push_back(cv::KeyPoint(point, 1.f));
+    output_image = input_image.clone();
+
+    if( ! context.keypoints_.empty()) {
+        std::vector<cv::KeyPoint> keypoints = context.keypoints_;
+        cv::drawKeypoints(input_image, keypoints, output_image,
+                          CV_RGB(0, 128, 255),
+                          cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
     }
-    cv::Mat output_image;
-    cv::drawKeypoints(input_image, keypoints, output_image, CV_RGB(0, 255, 0));
-    return output_image;
 }
 
-cv::Mat Vizualization::prepareOpticalFlowVizual(const Context &context) {
+void Vizualization::prepareFeaturesVisual(const Context &context, cv::Mat& output_image) {
+
+    cv::Mat &input_image = context.frame_current_->image_left_;
+    output_image = input_image.clone();
+
+    if ( ! context.frame_current_) {
+        return  ;
+    }
+
+    if( ! context.frame_current_->getPointsLeft().empty() ) {
+        std::vector<cv::KeyPoint> keypoints;
+        cv::KeyPoint::convert(context.frame_current_->getPointsLeft(), keypoints, 5, 5, 0, -1);
+        cv::drawKeypoints(input_image, keypoints, output_image, CV_RGB(0, 255, 0));
+    }
+}
+
+void Vizualization::prepareOpticalFlowVizual(const Context &context, cv::Mat& output_image) {
 
     const cv::Mat &input_image = context.frame_current_->image_left_;
-    cv::Mat output_image;
+    cv::cvtColor(input_image, output_image, cv::COLOR_GRAY2BGR);
 
-    std::vector<cv::Point2f> points_left_t0;
-    std::vector<cv::Point2f> points_left_t1;
-    for(int i=0; i < context.frame_current_->features_left_.size(); i++) {
-        points_left_t0.push_back(context.frame_previous_->features_left_[i]->getPoint2D());
-        points_left_t1.push_back(context.frame_current_->features_left_[i]->getPoint2D());
+    if ( ! context.frame_current_) {;
+        return;
     }
 
-    int radius = 2;
+    assert(context.flow_points_2d_t0.size() == context.flow_points_2d_t1.size());
 
-    for (int i = 0; i < points_left_t0.size(); i++)
-    {
-        cv::circle(output_image, cv::Point(points_left_t0[i].x, points_left_t0[i].y), radius, CV_RGB(0, 255, 0));
+    for (int i = 0; i < context.flow_points_2d_t0.size(); i++) {
+        cv::circle(output_image, context.flow_points_2d_t0[i], 2, CV_RGB(0, 255, 0));
+        cv::circle(output_image, context.flow_points_2d_t1[i], 2, CV_RGB(255, 0, 0));
+        cv::line(output_image, context.flow_points_2d_t0[i], context.flow_points_2d_t1[i], CV_RGB(0, 255, 0));
     }
-    for (int i = 0; i < points_left_t1.size(); i++)
-    {
-        cv::circle(output_image, cv::Point(points_left_t1[i].x, points_left_t1[i].y), radius, CV_RGB(255, 0, 0));
-    }
-    for (int i = 0; i < points_left_t1.size(); i++)
-    {
-        cv::line(output_image, points_left_t0[i], points_left_t1[i], CV_RGB(0, 255, 0));
-    }
-
-    return output_image;
 }
 

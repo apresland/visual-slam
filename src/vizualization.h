@@ -8,7 +8,8 @@
 #include "context.h"
 
 struct Vizualization {
-    cv::Mat prepareFeaturesVisual(const Context &context);
-    cv::Mat prepareOpticalFlowVizual(const Context &context);
+    static void prepareKeypointsVisual(const Context &context, cv::Mat& output_image);
+    static void prepareFeaturesVisual(const Context &context, cv::Mat& output_image);
+    static void prepareOpticalFlowVizual(const Context &context, cv::Mat& output_image);
 };
 #endif //VISUAL_SLAM_VIEWER_H

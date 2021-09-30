@@ -46,6 +46,8 @@ int Frontend::process() {
 
     if ( ! context_.frame_previous_ || ! context_.frame_current_ ) return -1;
 
+    context_.keypoints_.clear();
+
     // -----------------------------------------------------------------------------------------------------------------
     // Matching : circular match 2D features on 4 images (prev/current x left/right)
     // -----------------------------------------------------------------------------------------------------------------
