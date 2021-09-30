@@ -52,6 +52,10 @@ public:
         camera_right_ = camera_right;
     }
 
+    Sophus::SE3d getPose() {
+        return context_.frame_current_->getPose();
+    }
+
 private:
     int initialize();
     int process();

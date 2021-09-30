@@ -1,25 +1,73 @@
 version: '2.3'
 
+networks:
+  ros:
+    driver: bridge
+
 services:
-  dev:
+
+  master:
+    image: ros:melodic-ros-core
+    container_name: master
+    command: stdbuf -o L roscore
+    networks:
+      - ros
+    restart: always
+
+  odometry:
     runtime: nvidia
     build:
       context: .
       dockerfile: Dockerfile
+    container_name: odometry
+    depends_on:
+        - master
     stdin_open: true
     tty: true
     security_opt:
       - seccomp:unconfined
       - apparmor:unconfined
-    container_name: dev
+    networks:
+      - ros
     ports:
       - "7776:22" # SSH
       - "7777:7777" # GDB Server
     environment:
-      - DISPLAY
+      - "ROS_MASTER_URI=http://master:11311"
+      - "ROS_HOSTNAME=odometry"
+      - "ROS_ROOT=/opt/ros/melodic/share/ros"
+      - "ROS_PACKAGE_PATH=/opt/ros/melodic/share"
+      - "DISPLAY"
+      - "QT_X11_NO_MITSHM=1"
     volumes:
       - ${HOME}/.Xauthority:/home/dev/.Xauthority:rw # X11 stuff
       - /tmp/.X11-unix:/tmp/.X11-unix:rw # X11 stuff
       - /dev/dri:/dev/dri #X11 stuff
       - /dev/snd:/dev/snd #X11 stuff
       - /data:/data #
+      - /home/andy:/home/andy:rw
+
+  vizualizer:
+    image: osrf/ros:melodic-desktop-full
+    container_name: visualizer
+    depends_on:
+      - master
+    networks:
+      - ros
+    environment:
+      - "ROS_MASTER_URI=http://master:11311"
+      - "ROS_HOSTNAME=visualizer"
+      - "DISPLAY"
+      - "QT_X11_NO_MITSHM=1" #fix some QT bugs
+    #share user in order to access your x11
+    user: 1000:1000 #adapt as needed!
+    volumes:
+      #share your x11 socket and permissions
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - /etc/group:/etc/group:ro
+      - /etc/passwd:/etc/passwd:ro
+      - /etc/shadow:/etc/shadow:ro
+      - /etc/sudoers:/etc/sudoers:ro
+      - /etc/sudoers.d:/etc/sudoers.d:ro
+      - /home/andy:/home/andy:rw
+    command: rviz

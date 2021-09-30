@@ -73,15 +73,6 @@ EXPOSE 22 7777
 RUN useradd -ms /bin/bash dev
 RUN echo 'dev:dev' | chpasswd
 
-# install opencv
-WORKDIR /home/dev/
-RUN git clone https://github.com/opencv/opencv.git
-RUN git clone https://github.com/opencv/opencv_contrib.git
-WORKDIR /home/dev/opencv/build
-RUN cmake -DOPENCV_EXTRA_MODULES_PATH=/home/dev/opencv_contrib/modules ..
-RUN make
-RUN make install
-
 RUN apt-get install libxmu-dev libxi-dev
 
 #install eigen
@@ -129,17 +120,16 @@ RUN cmake ..
 RUN make
 RUN make install
 
-# install ros
-#RUN apt update && apt install -y curl gnupg2 lsb-release
-#RUN sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
-#RUN curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key add -
-#RUN apt update && apt install -y ros-melodic-ros-base
+# ros packages
+RUN catkin_create_pkg cv_bridge image_transport image_transport_plugins
 
 # X11 forwarding
 ENV DISPLAY :0
 RUN export LIBGL_ALWAYS_INDIRECT=1
 
 WORKDIR /home/dev/
+
+RUN echo "source /opt/ros/melodic/setup.sh" >> /home/dev/.bashrc
 
 # Upon start, run ssh daemon
 CMD /usr/sbin/sshd -D

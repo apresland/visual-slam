@@ -9,14 +9,14 @@
 #include <vector>
 #include <Eigen/Core>
 #include <opencv2/core/core.hpp>
-#include <opencv4/opencv2/opencv.hpp>
+#include <opencv2/opencv.hpp>
 
 class Sequence {
 
 public:
     struct StereoPair {
-        std::string image_left_ {""};
-        std::string image_right_ {""};
+        std::string image_00_ {""};
+        std::string image_01_ {""};
         double timestamp_ {0.0};
     };
 
