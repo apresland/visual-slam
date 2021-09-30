@@ -7,7 +7,7 @@
 #include <sophus/se3.hpp>
 #include <geometry_msgs/PoseStamped.h>
 #include "system.h"
-#include "viewer.h"
+#include "vizualization.h"
 #include "frontend.h"
 #include "backend.h"
 #include "solve/matcher.h"
@@ -45,13 +45,6 @@ bool System::Init() {
 
 void System::Run() {
 
-    std::shared_ptr<Viewer> viewer;
-    //viewer = std::make_shared<Viewer>();
-    if (viewer) {
-        viewer->init();
-        viewer->loadGroundTruthPoses();
-    }
-
     std::shared_ptr<Matcher> matcher = std::make_shared<Matcher>();
     std::shared_ptr<Tracker> tracker = std::make_shared<Tracker>();
     std::shared_ptr<Estimation> estimation = std::shared_ptr<Estimation>();
@@ -71,7 +64,6 @@ void System::Run() {
     frontend->setTracker(tracker);
     frontend->setTriangulator(triangulator);
     frontend->setEstimation(estimation);
-    frontend->setViewer(viewer);
     frontend->setBackend(backend);
 
     loadGroundTruthPoses();
@@ -102,11 +94,11 @@ void System::Run() {
         image_msg_01->header.frame_id
                 = "base_link";
 
-        publishLeftImage(image_msg_00);
-        publishRightImage(image_msg_01);
-
         frontend->pushback(image_00, image_01);
         Sophus::SE3d pose = frontend->getPose();
+
+        publishLeftImage(image_msg_00);
+        publishRightImage(image_msg_01);
         publishPose(pose);
 
         ros::spinOnce();

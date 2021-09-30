@@ -13,7 +13,7 @@
 #include <map/map.h>
 #include "context.h"
 #include "backend.h"
-#include "viewer.h"
+#include "vizualization.h"
 
 constexpr unsigned int MIN_FEATURE_COUNT = 500;
 constexpr float IMAGE_SCALE_FACTOR = 1.0;
@@ -31,7 +31,7 @@ public:
     void setBackend(std::shared_ptr<Backend> backend) {
         backend_ = backend;
     }
-    void setViewer(std::shared_ptr<Viewer> viewer) {
+    void setViewer(std::shared_ptr<Vizualization> viewer) {
         viewer_ = viewer;
     }
     void setMatcher(std::shared_ptr<Matcher> matcher) {
@@ -70,7 +70,7 @@ private:
     std::shared_ptr<Estimation> estimation_{};
     std::shared_ptr<Map> map_ {nullptr};
     std::shared_ptr<Backend> backend_ {nullptr};
-    std::shared_ptr<Viewer> viewer_{nullptr};
+    std::shared_ptr<Vizualization> viewer_{nullptr};
     std::shared_ptr<Camera> camera_left_{nullptr};
     std::shared_ptr<Camera> camera_right_{nullptr};
 

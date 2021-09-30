@@ -27,8 +27,6 @@ void Frontend::pushback(cv::Mat &image_left, cv::Mat &image_right) {;
 
 int Frontend::initialize() {
 
-    context_.viewer_ = viewer_;
-
     // -----------------------------------------------------------------------------------------------------------------
     // Detection : detect new features with FAST and bucketing
     // -----------------------------------------------------------------------------------------------------------------

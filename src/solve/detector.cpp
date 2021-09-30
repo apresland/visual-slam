@@ -1,4 +1,4 @@
-#include "viewer.h"
+#include "vizualization.h"
 #include "detector.h"
 
 Detector::Detector() {
@@ -49,10 +49,6 @@ bool Detector::detect(Context &context) {
             occupancy_grid.at(index) = true;
             ++new_feature_count;
         }
-    }
-
-    if (context.viewer_) {
-        context.viewer_->displayFeatures(context);
     }
 
     std::cout << "[INFO] Detector::detected - keypoints: total { " << context.frame_current_->features_left_.size() <<  " : new " << new_feature_count << " }" << std::endl;

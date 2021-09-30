@@ -3,7 +3,7 @@
 #include <opencv2/opencv.hpp>
 #include <sensor/frame.h>
 #include "tracker.h"
-#include "viewer.h"
+#include "vizualization.h"
 
 void Tracker::track(Context &context) {
     std::cout << "[INFO] Tracker::track - tracking " << context.frame_previous_->features_left_.size() << " 2D points" << std::endl;
@@ -26,10 +26,6 @@ void Tracker::track(Context &context) {
             feature_t1->setLandmark(context.frame_previous_->features_left_[i]->getLandmark());
             context.frame_current_->features_left_.push_back(feature_t1);
         }
-    }
-
-    if ( context.viewer_ ) {
-        context.viewer_->displayTracking(context);
     }
 
     std::cout << "[INFO] Tracker::track - tracked " << context.frame_current_->features_left_.size() << " 2D points" << std::endl;
