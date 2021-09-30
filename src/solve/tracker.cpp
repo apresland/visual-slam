@@ -3,10 +3,13 @@
 #include <opencv2/opencv.hpp>
 #include <sensor/frame.h>
 #include "tracker.h"
-#include "viewer.h"
+#include "vizualization.h"
 
 void Tracker::track(Context &context) {
     std::cout << "[INFO] Tracker::track - tracking " << context.frame_previous_->features_left_.size() << " 2D points" << std::endl;
+
+    context.flow_points_2d_t0.clear();
+    context.flow_points_2d_t1.clear();
 
     std::vector<cv::Point2f> frame_t0_points_2d_left = context.frame_previous_->getPointsLeft();
     std::vector<cv::Point2f> frame_t1_points_2d_left = context.frame_previous_->getPointsLeft();
@@ -25,11 +28,9 @@ void Tracker::track(Context &context) {
             std::shared_ptr<Feature> feature_t1 = std::make_shared<Feature>(context.frame_current_->getID(), p2d_t1);
             feature_t1->setLandmark(context.frame_previous_->features_left_[i]->getLandmark());
             context.frame_current_->features_left_.push_back(feature_t1);
+            context.flow_points_2d_t0.push_back(frame_t0_points_2d_left[i]);
+            context.flow_points_2d_t1.push_back(frame_t1_points_2d_left[i]);
         }
-    }
-
-    if ( context.viewer_ ) {
-        context.viewer_->displayTracking(context);
     }
 
     std::cout << "[INFO] Tracker::track - tracked " << context.frame_current_->features_left_.size() << " 2D points" << std::endl;

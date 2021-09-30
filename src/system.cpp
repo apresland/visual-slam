@@ -1,13 +1,14 @@
 #include <memory>
 #include <thread>
 #include <fstream>
-#include <cv_bridge/cv_bridge.h>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <sophus/se3.hpp>
+#include <cv_bridge/cv_bridge.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <sensor_msgs/image_encodings.h>
 #include "system.h"
-#include "viewer.h"
+#include "vizualization.h"
 #include "frontend.h"
 #include "backend.h"
 #include "solve/matcher.h"
@@ -19,11 +20,16 @@ System::System(ros::NodeHandle& node_handle)
     , image_trans_(node_handle_)
     , path_root_("/data/kitti/odometry/dataset/sequences/00/")
     , calibration_file_(path_root_ + "/calib.txt") {
+
     image_pub_00_ = image_trans_.advertiseCamera("grayscale/left/image", 1);
     image_pub_01_ = image_trans_.advertiseCamera("grayscale/right/image", 1);
     pose_pub_ = node_handle_.advertise<geometry_msgs::PoseStamped>("pose", 1);
     path_publisher_ = node_handle_.advertise<nav_msgs::Path>("path", 1);
     path_publisher_truth_ = node_handle_.advertise<nav_msgs::Path>("path_truth", 1);
+
+    image_pub_keypoints_ = image_trans_.advertise("keypoints", 1);
+    image_pub_features_ = image_trans_.advertise("features", 1);
+    image_pub_optical_flow_ = image_trans_.advertise("optical_flow", 1);
 }
 
 bool System::Init() {
@@ -45,13 +51,6 @@ bool System::Init() {
 
 void System::Run() {
 
-    std::shared_ptr<Viewer> viewer;
-    //viewer = std::make_shared<Viewer>();
-    if (viewer) {
-        viewer->init();
-        viewer->loadGroundTruthPoses();
-    }
-
     std::shared_ptr<Matcher> matcher = std::make_shared<Matcher>();
     std::shared_ptr<Tracker> tracker = std::make_shared<Tracker>();
     std::shared_ptr<Estimation> estimation = std::shared_ptr<Estimation>();
@@ -71,7 +70,6 @@ void System::Run() {
     frontend->setTracker(tracker);
     frontend->setTriangulator(triangulator);
     frontend->setEstimation(estimation);
-    frontend->setViewer(viewer);
     frontend->setBackend(backend);
 
     loadGroundTruthPoses();
@@ -102,12 +100,14 @@ void System::Run() {
         image_msg_01->header.frame_id
                 = "base_link";
 
-        publishLeftImage(image_msg_00);
-        publishRightImage(image_msg_01);
-
         frontend->pushback(image_00, image_01);
         Sophus::SE3d pose = frontend->getPose();
+
+        publishLeftImage(image_msg_00);
+        publishRightImage(image_msg_01);
         publishPose(pose);
+
+        vizualizeContext(frontend->getContext());
 
         ros::spinOnce();
     }
@@ -156,6 +156,33 @@ void System::publishPose(Sophus::SE3d pose) {
     path_msg_.poses.emplace_back(pose_msg);
     path_publisher_.publish(path_msg_);
     path_publisher_truth_.publish(path_msg_truth_);
+}
+
+void System::vizualizeContext(const Context& context){
+
+    cv::Mat kpts_img;Vizualization::prepareKeypointsVisual(context, kpts_img);
+    cv_bridge::CvImagePtr cv_ptr_kpts(new cv_bridge::CvImage);
+    cv_ptr_kpts->encoding = "rgb8";
+    cv_ptr_kpts->header.frame_id = "base_link";
+    cv_ptr_kpts->image = kpts_img;
+    image_pub_keypoints_.publish(cv_ptr_kpts->toImageMsg());
+
+    cv::Mat feat_img;
+    Vizualization::prepareFeaturesVisual(context, feat_img);
+    cv_bridge::CvImagePtr cv_ptr_feats(new cv_bridge::CvImage);
+    cv_ptr_feats->encoding = "rgb8";
+    cv_ptr_feats->header.frame_id = "base_link";
+    cv_ptr_feats->image = feat_img;
+    image_pub_features_.publish(cv_ptr_feats->toImageMsg());
+
+    cv::Mat flow_img;
+    Vizualization::prepareOpticalFlowVizual(context, flow_img);
+    cv_bridge::CvImagePtr cv_ptr_flow(new cv_bridge::CvImage);
+    cv_ptr_flow->encoding = "rgb8";
+    cv_ptr_flow->header.frame_id = "base_link";
+    cv_ptr_flow->image = flow_img;
+    image_pub_optical_flow_.publish(cv_ptr_flow->toImageMsg());
+
 }
 
 void System::loadGroundTruthPoses() {

@@ -56,8 +56,8 @@ add_executable(${PROJECT_NAME}
         backend.h
         sequence.cpp
         sequence.h
-        viewer.cpp
-        viewer.h)
+        vizualization.cpp
+        vizualization.h)
 
 target_link_libraries(${PROJECT_NAME}
         ${OpenCV_LIBS}

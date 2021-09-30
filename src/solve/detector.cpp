@@ -1,4 +1,4 @@
-#include "viewer.h"
+#include "vizualization.h"
 #include "detector.h"
 
 Detector::Detector() {
@@ -33,6 +33,7 @@ bool Detector::detect(Context &context) {
     // FAST keypoint detection and presort on quality
     std::vector<cv::KeyPoint> keypoints;
     detector_->detect(context.frame_current_->image_left_, keypoints);
+    context.keypoints_ = keypoints;
 
     // sort detections by quality of response
     std::sort(keypoints.begin(), keypoints.end(), keypoint_response_comparitor);
@@ -49,10 +50,6 @@ bool Detector::detect(Context &context) {
             occupancy_grid.at(index) = true;
             ++new_feature_count;
         }
-    }
-
-    if (context.viewer_) {
-        context.viewer_->displayFeatures(context);
     }
 
     std::cout << "[INFO] Detector::detected - keypoints: total { " << context.frame_current_->features_left_.size() <<  " : new " << new_feature_count << " }" << std::endl;
