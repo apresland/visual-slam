@@ -1,6 +1,7 @@
-# Stereo Visual Odometry based SLAM
-This repository contains a C++ implementation of __Simultaneous Localisation and Mapping (SLAM)__ with a stereo __Visual Odometry (VO)__ frontend to provide 
-initial pose estimation. A demonstration is supplied using the KITTI dataset. 
+# Stereo Visual Odometry
+A stereo __Visual Odometry (VO)__ frontend to providing initial pose estimation and demonstrated using the KITTI dataset. Implemented in C++ and based on Robot Operating System (ROS) and OpenCV with Sophus and Eigen providing Lie Algebra and Linear Algebra. Docker eases dependency management and provides modularization with development in CLion configured to conect to a remote docker target. The solution publishes estimated poses and perception results to ROS topics that can be visualized using RViz running in a dedicated docker instance. Docker compose is used to run the multi-container application and compose file and docker files are provided.  
+
+![kitti_optical_flow](https://user-images.githubusercontent.com/5468707/146170834-990d25c9-dbb9-42ca-8c2a-3fb1a251f22e.gif)
 
 ## Overview
 The VO frontend pipeline is responsible for online pose state-estimation. It is implemented with OpenCV and Eigen and consists of the following stages:
