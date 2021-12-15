@@ -4,15 +4,17 @@
 
 A stereo __Visual Odometry (VO)__ frontend to providing initial pose estimation and demonstrated using the KITTI dataset. Implemented in C++ and based on Robot Operating System (ROS) and OpenCV with Sophus and Eigen providing Lie Algebra and Linear Algebra. Docker eases dependency management and provides modularization with development in CLion configured to conect to a remote docker target. The solution publishes estimated poses and perception results to ROS topics that can be visualized using RViz running in a dedicated docker instance. Docker compose is used to run the multi-container application and compose file and docker files are provided.
 
-## Algorithm
+## Algorithm Description
 
-### Image Acquisition
+### 1. Image Acquisition
 Capture a stereo image pair at time T and T+1 and process the images to compensate for lens distortion. Perform stereo rectification so that epipolar lines become parallel to horizontal. In KITTI dataset the input images are already corrected for lens distortion and stereo rectified.
 
-### Feature Detection
-Generate features on the left camera image at time T using FAST (Features from Accelerated Segment Test) corner detector. FAST is computationally less expensive than other feature detectors like SIFT and SURF. Apply feature bucketing where the image is divided into non-overlapping rectangles and a constant number of feature points with maximal response values are then selected from each bucket. Bucketing has two benefits: i) Input features are well distributed throughout the image which results in higher accuracy in motion estimation. ii) The computation complexity of algorithm is reduced by the smaller sample of features. Disparity map for time T is also generated using the left and right image pair.
+### 2. Feature Detection
+Generate features on the left camera image at time T using FAST (Features from Accelerated Segment Test) corner detector. FAST is computationally less expensive than other feature detectors like SIFT and SURF. Apply feature bucketing where the image is divided into non-overlapping rectangles and a constant number of feature points with maximal response values are then selected from each bucket. Bucketing has two benefits: i) Input features are well distributed throughout the image which results in higher accuracy in motion estimation. ii) The computation complexity of algorithm is reduced by the smaller sample of features.
 
-### Feature Matching
+### 3. Feature Matching(tracking)
+Features generated in previous step are then searched in image at time T+1. More recent literature uses KLT (Kanade-Lucas-Tomasi) tracker for feature matching. Features from image at time T are tracked at time T+1 using a 15x15 search windows and 3 image pyramid level search. KLT tracker outputs the corresponding coordinates for each input feature and accuracy and error measure by which each feature was tracked. Feature points that are tracked with high error or lower accuracy are dropped from further computation.
+
 ### 3D Point Cloud Generation
 ### Inlier Detection
 ### Motion Estimation
