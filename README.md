@@ -1,5 +1,5 @@
 # Stereo Visual Odometry
-<img src="https://user-images.githubusercontent.com/5468707/146170834-990d25c9-dbb9-42ca-8c2a-3fb1a251f22e.gif" width=600>  <img src="https://user-images.githubusercontent.com/5468707/146187900-8fbb37cd-d156-41f1-9019-aeb0aff66a67.gif" height=180 width=180>
+<img src="https://user-images.githubusercontent.com/5468707/146170834-990d25c9-dbb9-42ca-8c2a-3fb1a251f22e.gif" width=75%>  <img src="https://user-images.githubusercontent.com/5468707/146187900-8fbb37cd-d156-41f1-9019-aeb0aff66a67.gif" height=217 width=217>
 
 Visual odometry (VO) is the process of estimating the egomotion of an agent (e.g., vehicle, human, and robot) using only the input of a single or multiple cameras attached to it. Application domains include robotics, wearable computing, augmented reality, and automotive. The advantage of VO with respect to wheel odometry is that VO is not affected by wheel slip in uneven terrain or other adverse conditions. It has been demonstrated that compared to wheel odometry, VO provides more accurate trajectory estimates, with relative position error ranging from 0.1 to 2%.
 
@@ -16,16 +16,16 @@ This project provides a complete __Stereo Visual Odometry (VO)__ frontend provid
 * __Docker-Compose__ to run the multi-container application and provide a dedicated network.
 * __CLion__ configured to conect to a remote docker target.
 
-The project is structured as follows:
+## Project structure
 ```
 .
 ├── CMakeLists.txt
 ├── docker_build.sh
-├── docker-compose.yaml
+├── docker_up.sh
 ├── docker_down.sh
+├── docker-compose.yaml
 ├── Dockerfile_odometry
 ├── Dockerfile_visualizer
-├── docker_up.sh
 ├── odometry.env
 ├── odometry.rviz
 ├── src
