@@ -15,10 +15,9 @@ services:
     restart: always
 
   odometry:
-    runtime: nvidia
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile_odometry
     container_name: odometry
     depends_on:
         - master
@@ -46,19 +45,23 @@ services:
       - /dev/snd:/dev/snd #X11 stuff
       - /data:/data #
       - /home/andy:/home/andy:rw
+    restart: always
 
   vizualizer:
-    image: osrf/ros:melodic-desktop-full
+    build:
+      context: .
+      dockerfile: Dockerfile_visualizer
     container_name: visualizer
     depends_on:
       - master
     networks:
       - ros
+    runtime: nvidia
     environment:
       - "ROS_MASTER_URI=http://master:11311"
       - "ROS_HOSTNAME=visualizer"
       - "DISPLAY"
-      - "QT_X11_NO_MITSHM=1" #fix some QT bugs
+      - "QT_X11_NO_MITSHM=1"
     #share user in order to access your x11
     user: 1000:1000 #adapt as needed!
     volumes:
@@ -70,4 +73,5 @@ services:
       - /etc/sudoers:/etc/sudoers:ro
       - /etc/sudoers.d:/etc/sudoers.d:ro
       - /home/andy:/home/andy:rw
+    restart: always
     command: rviz
