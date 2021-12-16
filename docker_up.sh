@@ -12,6 +12,5 @@ then
     fi
     chmod a+r $XAUTH
 fi
-
 docker-compose up -d
 

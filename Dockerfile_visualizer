@@ -1,0 +1,22 @@
+FROM osrf/ros:melodic-desktop-full
+
+# nvidia-container-runtime
+ENV NVIDIA_VISIBLE_DEVICES \
+    ${NVIDIA_VISIBLE_DEVICES:-all}
+ENV NVIDIA_DRIVER_CAPABILITIES \
+    ${NVIDIA_DRIVER_CAPABILITIES:+$NVIDIA_DRIVER_CAPABILITIES,}graphics
+
+# Create dev user with password 'dev'
+RUN useradd -ms /bin/bash dev
+RUN echo 'dev:dev' | chpasswd
+
+# ros packages
+RUN catkin_create_pkg cv_bridge image_transport image_transport_plugins
+
+# X11 forwarding
+ENV DISPLAY :0
+RUN export LIBGL_ALWAYS_INDIRECT=1
+
+WORKDIR /home/dev/
+
+RUN echo "source /opt/ros/melodic/setup.sh" >> /home/dev/.bashrc
